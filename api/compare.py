@@ -4,22 +4,12 @@ import re
 import os
 from urllib.parse import urlparse, unquote
 
-def extract_product_info(url):
-    """Extrae información rápida del producto desde la URL"""
+def extract_info(url):
     decoded_url = unquote(url)
     path = urlparse(decoded_url).path.lower()
-    path = path.replace('-', ' ').replace('_', ' ').replace('/', ' ')
+    return ' '.join(word for word in path.replace('-', ' ').split() if len(word) > 2 or word.isdigit())
 
-    # Extracción más rápida y directa
-    relevant_terms = []
-    for word in path.split():
-        if len(word) > 2 or word.isdigit():
-            relevant_terms.append(word)
-
-    return ' '.join(relevant_terms)
-
-def analyze_with_perplexity(products_info):
-    """Análisis rápido con Perplexity"""
+def analyze(products_info):
     try:
         client = OpenAI(
             api_key=os.environ.get('PERPLEXITY_API_KEY'),
@@ -60,22 +50,19 @@ def analyze_with_perplexity(products_info):
     except Exception as e:
         return f"Error: {str(e)}"
 
-def handler(request):
-    """Manejador para Vercel"""
-    if request.get('method') == 'OPTIONS':
+def index(req):
+    if req.method == 'OPTIONS':
         return {
             'statusCode': 200,
             'headers': {
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'POST, OPTIONS',
                 'Access-Control-Allow-Headers': 'Content-Type'
-            },
-            'body': ''
+            }
         }
 
     try:
-        # Obtener datos del body
-        body = json.loads(request.get('body', '{}'))
+        body = json.loads(req.body)
         urls = body.get('urls', [])
 
         if not urls:
@@ -90,11 +77,8 @@ def handler(request):
                 })
             }
 
-        # Extraer información de productos
-        products_info = [extract_product_info(url) for url in urls]
-        
-        # Analizar productos
-        analysis = analyze_with_perplexity("\n".join(products_info))
+        products_info = [extract_info(url) for url in urls]
+        analysis = analyze("\n".join(products_info))
 
         return {
             'statusCode': 200,
