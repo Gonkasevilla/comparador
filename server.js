@@ -18,8 +18,8 @@ app.post('/api/compare', async (req, res) => {
 
     console.log('Analizando URLs:', JSON.stringify(urls, null, 2));
 
-    const pythonProcess = spawn('python', [
-        path.join(__dirname, 'backend', 'scrapers', 'perplexity_analyzer.py'),
+    const pythonProcess = spawn('python3', [  // Cambiado a python3
+        path.join(__dirname, 'api', 'compare.py'),  // Cambiada la ruta
         ...urls
     ]);
 
@@ -40,22 +40,17 @@ app.post('/api/compare', async (req, res) => {
         console.log('Datos completos recibidos:\n', outputData);
 
         try {
-            // Intentar diferentes métodos para encontrar el JSON
             let jsonData;
-            
-            // Método 1: Buscar entre marcadores
             const markerMatch = outputData.match(/RESULT_JSON_START\n([\s\S]*?)\nRESULT_JSON_END/);
             if (markerMatch) {
                 console.log('JSON encontrado entre marcadores');
                 jsonData = JSON.parse(markerMatch[1].trim());
             }
             
-            // Método 2: Buscar el último objeto JSON válido en el texto
             if (!jsonData) {
                 console.log('Intentando encontrar JSON válido en el texto completo');
                 const jsonMatch = outputData.match(/\{[\s\S]*\}/g);
                 if (jsonMatch) {
-                    console.log('Encontrado posible JSON en el texto');
                     jsonData = JSON.parse(jsonMatch[jsonMatch.length - 1]);
                 }
             }
@@ -64,7 +59,6 @@ app.post('/api/compare', async (req, res) => {
                 throw new Error('No se pudo encontrar un JSON válido en la respuesta');
             }
 
-            console.log('JSON procesado exitosamente');
             res.json(jsonData);
 
         } catch (error) {
@@ -73,12 +67,7 @@ app.post('/api/compare', async (req, res) => {
             
             res.status(500).json({
                 error: 'Error procesando la comparación',
-                details: error.message,
-                debugInfo: {
-                    outputLength: outputData.length,
-                    firstLines: outputData.split('\n').slice(0, 5),
-                    lastLines: outputData.split('\n').slice(-5)
-                }
+                details: error.message
             });
         }
     });
@@ -96,5 +85,4 @@ const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
-    console.log('Logs detallados activados');
 });
