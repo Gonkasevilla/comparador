@@ -6,34 +6,19 @@ from urllib.parse import urlparse, unquote
 
 def extract_product_info(url):
     """Extrae información del producto desde la URL"""
+    print(f"Extrayendo info de URL: {url}")  # Debug log
     decoded_url = unquote(url)
     path = urlparse(decoded_url).path
     clean_path = path.replace('-', ' ').replace('_', ' ').replace('/', ' ').lower()
     
-    patterns = {
-        'brand': r'(samsung|lg|philips|bosch|siemens|balay|whirlpool|apple|hp|lenovo|acer|asus|msi|pccom)',
-        'model': r'([a-zA-Z0-9]+-?[a-zA-Z0-9]+)',
-        'features': r'(wifi|smart|digital|\d+\s*(gb|tb|inch|pulgadas|\"|cm|kg|w|hz|rtx|rx|gtx|ram|ssd))',
-        'category': r'(tv|telefono|portatil|laptop|nevera|lavadora|secadora|monitor|pc|ordenador)'
-    }
+    # ... resto del código de extracción ...
     
-    extracted_info = {}
-    for key, pattern in patterns.items():
-        matches = re.finditer(pattern, clean_path, re.IGNORECASE)
-        extracted_info[key] = list(set([match.group(0) for match in matches]))
-    
-    product_description = ' '.join([
-        item for sublist in extracted_info.values() 
-        for item in sublist
-    ])
-
-    if not product_description:
-        product_description = clean_path
-
+    print(f"Información extraída: {product_description}")  # Debug log
     return product_description
 
 def analyze_with_perplexity(products_info):
     """Analiza productos usando Perplexity"""
+    print("Iniciando análisis con Perplexity")  # Debug log
     try:
         api_key = os.environ.get('PERPLEXITY_API_KEY')
         if not api_key:
@@ -44,76 +29,74 @@ def analyze_with_perplexity(products_info):
             base_url="https://api.perplexity.ai"
         )
 
-        prompt = f"""
-        Compara estos productos de forma concisa y clara:
-
-        {products_info}
-
-        Estructura la respuesta así:
-
-        ### 🎯 RESUMEN RÁPIDO
-        **¿Cuál elegir?** [Una frase clara sobre qué producto es mejor según el uso]
-
-        ### 👤 PERFIL IDEAL
-        • Primer producto ideal para:
-          - **Usuarios** que [beneficio principal]
-          - **Personas** que [ventaja clave]
-
-        • Segundo producto ideal para:
-          - **Usuarios** que [beneficio principal]
-          - **Personas** que [ventaja clave]
-
-        ### ⚡ DIFERENCIAS CLAVE
-        • **Principal:** [diferencia más importante]
-        • **Rendimiento:** [comparación de rendimiento]
-        • **Precio/Calidad:** [relación calidad-precio]
-
-        ### 💡 CONSEJO FINAL
-        [Recomendación directa y personal]
-        """
-
+        print("Enviando prompt a Perplexity")  # Debug log
         response = client.chat.completions.create(
             model="llama-3.1-sonar-large-128k-online",
             messages=[
                 {
                     "role": "system",
-                    "content": "Eres un experto que da consejos claros y prácticos sobre productos. Usa lenguaje natural y enfócate en beneficios reales para el usuario."
+                    "content": "Eres un experto que da consejos claros y prácticos sobre productos."
                 },
                 {
                     "role": "user",
-                    "content": prompt
+                    "content": f"Compara estos productos de forma concisa:\n\n{products_info}"
                 }
             ],
             temperature=0.3,
             max_tokens=1000
         )
 
+        print("Respuesta recibida de Perplexity")  # Debug log
         return response.choices[0].message.content
 
     except Exception as e:
+        print(f"Error en Perplexity: {str(e)}")  # Debug log
         return f"Error en el análisis: {str(e)}"
 
 def handler(request):
     """Manejador principal para Vercel"""
+    print("Iniciando handler")  # Debug log
+    
     if request.method == "OPTIONS":
-        # Manejo de pre-flight CORS
+        print("Manejando OPTIONS request")  # Debug log
         return {
             "statusCode": 200,
             "headers": {
                 "Access-Control-Allow-Origin": "*",
                 "Access-Control-Allow-Methods": "POST, OPTIONS",
                 "Access-Control-Allow-Headers": "Content-Type"
-            }
+            },
+            "body": ""  # Cuerpo vacío para OPTIONS
         }
 
     try:
-        # Para solicitudes POST
+        print(f"Método de la request: {request.method}")  # Debug log
+        
         if request.method == "POST":
-            # Obtener las URLs del body
-            body = json.loads(request.body)
+            print("Procesando POST request")  # Debug log
+            
+            # Intentar parsear el body
+            try:
+                body = json.loads(request.body)
+                print(f"Body parseado: {body}")  # Debug log
+            except json.JSONDecodeError as e:
+                print(f"Error parseando JSON: {str(e)}")  # Debug log
+                return {
+                    "statusCode": 400,
+                    "headers": {
+                        "Content-Type": "application/json",
+                        "Access-Control-Allow-Origin": "*"
+                    },
+                    "body": json.dumps({
+                        "error": f"Error en formato JSON: {str(e)}"
+                    })
+                }
+
             urls = body.get('urls', [])
+            print(f"URLs recibidas: {urls}")  # Debug log
 
             if not urls:
+                print("No se proporcionaron URLs")  # Debug log
                 return {
                     "statusCode": 400,
                     "headers": {
@@ -125,18 +108,18 @@ def handler(request):
                     })
                 }
 
-            # Extraer información de cada URL
+            # Procesar URLs
             products_info = []
             for url in urls:
-                product_info = extract_product_info(url)
-                if product_info:
-                    products_info.append(product_info)
+                info = extract_product_info(url)
+                if info:
+                    products_info.append(info)
 
-            # Si tenemos información de productos, analizarla
             if products_info:
+                print("Analizando productos")  # Debug log
                 analysis = analyze_with_perplexity("\n\n".join(products_info))
                 
-                return {
+                response = {
                     "statusCode": 200,
                     "headers": {
                         "Content-Type": "application/json",
@@ -147,19 +130,12 @@ def handler(request):
                         "analysis": analysis
                     })
                 }
-            
-            return {
-                "statusCode": 400,
-                "headers": {
-                    "Content-Type": "application/json",
-                    "Access-Control-Allow-Origin": "*"
-                },
-                "body": json.dumps({
-                    "error": "No se pudo extraer información de los productos"
-                })
-            }
+                print(f"Enviando respuesta: {response}")  # Debug log
+                return response
 
     except Exception as e:
+        error_msg = f"Error en el procesamiento: {str(e)}"
+        print(f"Error: {error_msg}")  # Debug log
         return {
             "statusCode": 500,
             "headers": {
@@ -167,6 +143,6 @@ def handler(request):
                 "Access-Control-Allow-Origin": "*"
             },
             "body": json.dumps({
-                "error": f"Error en el procesamiento: {str(e)}"
+                "error": error_msg
             })
         }
