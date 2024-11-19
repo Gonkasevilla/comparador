@@ -1,4 +1,3 @@
-from http.server import BaseHTTPRequestHandler
 from openai import OpenAI
 import json
 import re
@@ -6,7 +5,7 @@ import os
 from urllib.parse import urlparse, unquote
 
 def extract_product_info(url):
-    """Extrae información del producto desde la URL sin hacer requests"""
+    """Extrae información del producto desde la URL"""
     decoded_url = unquote(url)
     path = urlparse(decoded_url).path
     clean_path = path.replace('-', ' ').replace('_', ' ').replace('/', ' ').lower()
@@ -34,7 +33,7 @@ def extract_product_info(url):
     return product_description
 
 def analyze_with_perplexity(products_info):
-    """Analiza productos usando Perplexity con un prompt optimizado"""
+    """Analiza productos usando Perplexity"""
     try:
         api_key = os.environ.get('PERPLEXITY_API_KEY')
         if not api_key:
@@ -94,67 +93,80 @@ def analyze_with_perplexity(products_info):
     except Exception as e:
         return f"Error en el análisis: {str(e)}"
 
-def handler(event, context):
+def handler(request):
     """Manejador principal para Vercel"""
-    try:
-        # Obtener las URLs del body
-        body = json.loads(event.get('body', '{}'))
-        urls = body.get('urls', [])
-
-        if not urls:
-            return {
-                'statusCode': 400,
-                'body': json.dumps({
-                    'error': 'No se proporcionaron URLs'
-                })
+    if request.method == "OPTIONS":
+        # Manejo de pre-flight CORS
+        return {
+            "statusCode": 200,
+            "headers": {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "POST, OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type"
             }
+        }
 
-        # Extraer información de cada URL
-        products_info = []
-        for url in urls:
-            product_info = extract_product_info(url)
-            if product_info:
-                products_info.append(product_info)
+    try:
+        # Para solicitudes POST
+        if request.method == "POST":
+            # Obtener las URLs del body
+            body = json.loads(request.body)
+            urls = body.get('urls', [])
 
-        # Si tenemos información de productos, analizarla
-        if products_info:
-            analysis = analyze_with_perplexity("\n\n".join(products_info))
+            if not urls:
+                return {
+                    "statusCode": 400,
+                    "headers": {
+                        "Content-Type": "application/json",
+                        "Access-Control-Allow-Origin": "*"
+                    },
+                    "body": json.dumps({
+                        "error": "No se proporcionaron URLs"
+                    })
+                }
+
+            # Extraer información de cada URL
+            products_info = []
+            for url in urls:
+                product_info = extract_product_info(url)
+                if product_info:
+                    products_info.append(product_info)
+
+            # Si tenemos información de productos, analizarla
+            if products_info:
+                analysis = analyze_with_perplexity("\n\n".join(products_info))
+                
+                return {
+                    "statusCode": 200,
+                    "headers": {
+                        "Content-Type": "application/json",
+                        "Access-Control-Allow-Origin": "*"
+                    },
+                    "body": json.dumps({
+                        "success": True,
+                        "analysis": analysis
+                    })
+                }
             
             return {
-                'statusCode': 200,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
+                "statusCode": 400,
+                "headers": {
+                    "Content-Type": "application/json",
+                    "Access-Control-Allow-Origin": "*"
                 },
-                'body': json.dumps({
-                    'success': True,
-                    'analysis': analysis
-                })
-            }
-        else:
-            return {
-                'statusCode': 400,
-                'body': json.dumps({
-                    'error': 'No se pudo extraer información de los productos'
+                "body": json.dumps({
+                    "error": "No se pudo extraer información de los productos"
                 })
             }
 
     except Exception as e:
         return {
-            'statusCode': 500,
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
+            "statusCode": 500,
+            "headers": {
+                "Content-Type": "application/json",
+                "Access-Control-Allow-Origin": "*"
             },
-            'body': json.dumps({
-                'error': f'Error en el procesamiento: {str(e)}'
+            "body": json.dumps({
+                "error": f"Error en el procesamiento: {str(e)}"
             })
         }
-
-def do_OPTIONS(self):
-    """Manejo de CORS"""
-    self.send_response(200)
-    self.send_header('Access-Control-Allow-Origin', '*')
-    self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-    self.send_header('Access-Control-Allow-Headers', 'Content-Type')
-    self.end_headers()
