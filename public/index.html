@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Product Comparator</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="ad-banner">Advertisement Space</div>
+    
+    <div class="main-container">
+        <aside class="sidebar-left">Sidebar Ad</aside>
+        
+        <main class="content">
+            <header class="app-header">
+                <div class="logo-container">
+                    <i class="fas fa-balance-scale"></i>
+                    <h1>AI Product Comparator</h1>
+                </div>
+                <p class="subtitle">Experience the future of shopping decisions with our AI-powered comparison tool</p>
+                
+                <div class="features">
+                    <div class="feature">
+                        <i class="fas fa-bolt"></i>
+                        <span>Smart Analysis</span>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-brain"></i>
+                        <span>AI Powered</span>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-clock"></i>
+                        <span>Instant Results</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="comparison-form">
+                <div class="input-group">
+                    <label>
+                        <i class="fas fa-link"></i>
+                        Product URL
+                    </label>
+                    <input type="url" id="productUrl" placeholder="https://example.com/product">
+                </div>
+
+                <button class="add-product-btn">
+                    <i class="fas fa-plus"></i>
+                    Add Product
+                </button>
+            </div>
+
+            <div class="products-list"></div>
+            
+            <button class="compare-btn" disabled>
+                <i class="fas fa-check-circle"></i>
+                Compare Products
+            </button>
+
+            <div class="comparison-result"></div>
+        </main>
+
+        <aside class="sidebar-right">Sidebar Ad</aside>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
