@@ -6,140 +6,103 @@ import os
 from urllib.parse import urlparse, unquote
 
 def extract_product_info(url):
-    """Extrae información del producto desde la URL"""
+    """Extrae información rápida del producto desde la URL"""
     decoded_url = unquote(url)
-    path = urlparse(decoded_url).path
-    clean_path = path.replace('-', ' ').replace('_', ' ').replace('/', ' ').lower()
-    
-    patterns = {
-        'brand': r'(samsung|lg|philips|bosch|siemens|balay|whirlpool|apple|hp|lenovo|acer|asus|msi|pccom)',
-        'model': r'([a-zA-Z0-9]+-?[a-zA-Z0-9]+)',
-        'features': r'(wifi|smart|digital|\d+\s*(gb|tb|inch|pulgadas|\"|cm|kg|w|hz|rtx|rx|gtx|ram|ssd))',
-        'category': r'(tv|telefono|portatil|laptop|nevera|lavadora|secadora|monitor|pc|ordenador)'
-    }
-    
-    extracted_info = {}
-    for key, pattern in patterns.items():
-        matches = re.finditer(pattern, clean_path, re.IGNORECASE)
-        extracted_info[key] = list(set([match.group(0) for match in matches]))
-    
-    product_description = ' '.join([
-        item for sublist in extracted_info.values() 
-        for item in sublist
-    ])
+    path = urlparse(decoded_url).path.lower()
+    path = path.replace('-', ' ').replace('_', ' ').replace('/', ' ')
 
-    return product_description or clean_path
+    # Extracción más rápida y directa
+    relevant_terms = []
+    for word in path.split():
+        if len(word) > 2 or word.isdigit():  # Solo términos relevantes
+            relevant_terms.append(word)
+
+    return ' '.join(relevant_terms)
+
+def create_comparison_prompt(products):
+    return f"""Compara brevemente:
+{products}
+
+### 🎯 RESUMEN
+¿Cuál elegir? [una línea]
+
+### 👤 USOS
+• Producto 1: [dos líneas]
+• Producto 2: [dos líneas]
+
+### ⚡ DIFERENCIAS
+• Principal: [una línea]
+• Rendimiento: [una línea]
+• Precio/Calidad: [una línea]
+
+### 💡 CONSEJO
+[dos líneas máximo]"""
 
 def analyze_with_perplexity(products_info):
-    """Analiza productos usando Perplexity"""
+    """Análisis rápido con Perplexity"""
     try:
-        api_key = os.environ.get('PERPLEXITY_API_KEY')
-        if not api_key:
-            raise ValueError("No se encontró PERPLEXITY_API_KEY")
-
         client = OpenAI(
-            api_key=api_key,
+            api_key=os.environ.get('PERPLEXITY_API_KEY'),
             base_url="https://api.perplexity.ai"
         )
-
-        prompt = f"""
-        Compara estos productos de forma concisa y clara:
-
-        {products_info}
-
-        Estructura la respuesta así:
-
-        ### 🎯 RESUMEN RÁPIDO
-        **¿Cuál elegir?** [Una frase clara sobre qué producto es mejor según el uso]
-
-        ### 👤 PERFIL IDEAL
-        • Primer producto ideal para:
-          - **Usuarios** que [beneficio principal]
-          - **Personas** que [ventaja clave]
-
-        • Segundo producto ideal para:
-          - **Usuarios** que [beneficio principal]
-          - **Personas** que [ventaja clave]
-
-        ### ⚡ DIFERENCIAS CLAVE
-        • **Principal:** [diferencia más importante]
-        • **Rendimiento:** [comparación de rendimiento]
-        • **Precio/Calidad:** [relación calidad-precio]
-
-        ### 💡 CONSEJO FINAL
-        [Recomendación directa y personal]
-        """
 
         response = client.chat.completions.create(
             model="llama-3.1-sonar-large-128k-online",
             messages=[
-                {
-                    "role": "system",
-                    "content": "Eres un experto que da consejos claros y prácticos sobre productos."
-                },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
+                {"role": "system", "content": "Da recomendaciones breves y prácticas."},
+                {"role": "user", "content": create_comparison_prompt(products_info)}
             ],
             temperature=0.3,
-            max_tokens=1000
+            max_tokens=500  # Reducido para respuestas más cortas
         )
 
         return response.choices[0].message.content
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+def handle_request(event, context):
+    """Manejador principal optimizado"""
+    try:
+        # Parsear body
+        body = json.loads(event.get('body', '{}'))
+        urls = body.get('urls', [])
+
+        if not urls:
+            return {
+                'statusCode': 400,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'error': 'URLs requeridas'})
+            }
+
+        # Extraer información rápidamente
+        products_info = [extract_product_info(url) for url in urls]
+        
+        # Análisis rápido
+        analysis = analyze_with_perplexity("\n".join(products_info))
+
+        return {
+            'statusCode': 200,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'success': True, 'analysis': analysis})
+        }
 
     except Exception as e:
-        return f"Error en el análisis: {str(e)}"
+        return {
+            'statusCode': 500,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'error': str(e)})
+        }
 
-class handler(BaseHTTPRequestHandler):
-    def do_POST(self):
-        try:
-            content_length = int(self.headers['Content-Length'])
-            body = self.rfile.read(content_length)
-            data = json.loads(body)
-            urls = data.get('urls', [])
-
-            if not urls:
-                self.send_error(400, "No se proporcionaron URLs")
-                return
-
-            products_info = []
-            for url in urls:
-                info = extract_product_info(url)
-                if info:
-                    products_info.append(info)
-
-            if not products_info:
-                self.send_error(400, "No se pudo extraer información de los productos")
-                return
-
-            analysis = analyze_with_perplexity("\n\n".join(products_info))
-            
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/json')
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.end_headers()
-            
-            response = json.dumps({
-                "success": True,
-                "analysis": analysis
-            })
-            
-            self.wfile.write(response.encode())
-
-        except Exception as e:
-            self.send_response(500)
-            self.send_header('Content-Type', 'application/json')
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.end_headers()
-            
-            self.wfile.write(json.dumps({
-                "error": str(e)
-            }).encode())
-
-    def do_OPTIONS(self):
-        self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
-        self.end_headers()
+# Handler para Vercel
+def handler(event, context):
+    if event.get('httpMethod') == 'OPTIONS':
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'POST, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type'
+            }
+        }
+    
+    return handle_request(event, context)
