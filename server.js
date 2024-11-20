@@ -5,25 +5,30 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
+console.log('Iniciando servidor...');
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Health check endpoint
+// Estado del servidor
+let serverReady = false;
+
+// Health check simplificado
 app.get('/health', (req, res) => {
+    if (!serverReady) {
+        console.log('Health check fallido - servidor no listo');
+        return res.status(503).json({ status: 'initializing' });
+    }
+    console.log('Health check exitoso');
     res.status(200).json({ status: 'healthy' });
 });
 
-// Root path para Railway healthcheck y servir el frontend
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-const PYTHON_PATH = process.env.RAILWAY_ENVIRONMENT 
-    ? '/opt/venv/bin/python3'
-    : 'python';
-
+const PYTHON_PATH = 'python3';
 const ANALYZER_PATH = path.join(__dirname, 'backend', 'scrapers', 'perplexity_analyzer.py');
 
 // Verificar que el archivo existe
@@ -48,8 +53,6 @@ app.post('/api/compare', async (req, res) => {
     }
 
     console.log('Analizando URLs:', JSON.stringify(urls, null, 2));
-    console.log('Usando Python en:', PYTHON_PATH);
-    console.log('Ruta del analizador:', ANALYZER_PATH);
 
     try {
         const pythonProcess = spawn(PYTHON_PATH, [ANALYZER_PATH, ...urls], {
@@ -122,9 +125,35 @@ app.post('/api/compare', async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Servidor corriendo en puerto ${PORT}`);
-    console.log('Entorno:', process.env.RAILWAY_ENVIRONMENT || 'local');
-    console.log('Python Path:', PYTHON_PATH);
-    console.log('Analyzer Path:', ANALYZER_PATH);
+// Inicialización en dos fases
+const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Servidor iniciado en puerto ${PORT}`);
+    
+    // Verificar que Python está disponible
+    const pythonTest = spawn('python3', ['--version']);
+    
+    pythonTest.on('close', (code) => {
+        if (code === 0) {
+            console.log('Python disponible');
+            serverReady = true;
+        } else {
+            console.error('Python no disponible');
+            process.exit(1);
+        }
+    });
+});
+
+// Manejo de errores del servidor
+server.on('error', (error) => {
+    console.error('Error en el servidor:', error);
+    process.exit(1);
+});
+
+// Manejo de señales
+process.on('SIGTERM', () => {
+    console.log('SIGTERM recibido');
+    server.close(() => {
+        console.log('Servidor cerrado');
+        process.exit(0);
+    });
 });
