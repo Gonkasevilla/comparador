@@ -4,12 +4,14 @@
   "description": "Comparador de productos con IA",
   "main": "server.js",
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.0.0",
+    "python": ">=3.11.0"
   },
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "build": "node server.js"
+    "build": "npm install && pip install -r requirements.txt",
+    "postbuild": "echo 'Build completado correctamente'"
   },
   "dependencies": {
     "abort-controller": "^3.0.0",
