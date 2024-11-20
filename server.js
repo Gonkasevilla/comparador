@@ -18,12 +18,20 @@ app.post('/api/compare', async (req, res) => {
 
     console.log('Analizando URLs:', JSON.stringify(urls, null, 2));
 
-    const pythonProcess = spawn('python', [
-        path.join(__dirname, 'backend', 'scrapers', 'perplexity_analyzer.py'),
+    // En Railway, los archivos están en la carpeta /app
+    const analyzerPath = process.env.RAILWAY_ENVIRONMENT 
+        ? path.join('/app', 'backend', 'scrapers', 'perplexity_analyzer.py')
+        : path.join(__dirname, 'backend', 'scrapers', 'perplexity_analyzer.py');
+
+    const pythonCommand = process.env.RAILWAY_ENVIRONMENT ? 'python3' : 'python';
+
+    const pythonProcess = spawn(pythonCommand, [
+        analyzerPath,
         ...urls
     ]);
 
     let outputData = '';
+    let errorOutput = '';
 
     pythonProcess.stdout.on('data', (data) => {
         const chunk = data.toString();
@@ -32,12 +40,23 @@ app.post('/api/compare', async (req, res) => {
     });
 
     pythonProcess.stderr.on('data', (data) => {
-        console.error('Error de Python:', data.toString());
+        const chunk = data.toString();
+        console.error('Error de Python:', chunk);
+        errorOutput += chunk;
     });
 
     pythonProcess.on('close', (code) => {
         console.log('Código de salida Python:', code);
         console.log('Datos completos recibidos:\n', outputData);
+
+        if (code !== 0) {
+            console.error('Error en proceso Python. Salida de error:', errorOutput);
+            return res.status(500).json({
+                error: 'Error en el análisis',
+                details: errorOutput,
+                code
+            });
+        }
 
         try {
             // Intentar diferentes métodos para encontrar el JSON
@@ -65,19 +84,20 @@ app.post('/api/compare', async (req, res) => {
             }
 
             console.log('JSON procesado exitosamente');
-            res.json(jsonData);
+            return res.json(jsonData);
 
         } catch (error) {
             console.error('Error al procesar la respuesta:', error);
             console.error('Contenido completo de la respuesta:', outputData);
             
-            res.status(500).json({
+            return res.status(500).json({
                 error: 'Error procesando la comparación',
                 details: error.message,
                 debugInfo: {
                     outputLength: outputData.length,
                     firstLines: outputData.split('\n').slice(0, 5),
-                    lastLines: outputData.split('\n').slice(-5)
+                    lastLines: outputData.split('\n').slice(-5),
+                    errorOutput
                 }
             });
         }
@@ -85,7 +105,7 @@ app.post('/api/compare', async (req, res) => {
 
     pythonProcess.on('error', (error) => {
         console.error('Error al ejecutar Python:', error);
-        res.status(500).json({
+        return res.status(500).json({
             error: 'Error al ejecutar el analizador',
             details: error.message
         });
@@ -95,6 +115,7 @@ app.post('/api/compare', async (req, res) => {
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-    console.log(`Servidor corriendo en http://localhost:${PORT}`);
+    console.log(`Servidor corriendo en puerto ${PORT}`);
+    console.log('Entorno:', process.env.RAILWAY_ENVIRONMENT || 'local');
     console.log('Logs detallados activados');
 });
