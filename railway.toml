@@ -1,9 +1,15 @@
 [build]
 builder = "nixpacks"
-buildCommand = "pip install -r requirements.txt"
 
 [deploy]
-startCommand = "python app.py"
+startCommand = "python3 -m flask run --host=0.0.0.0 --port=$PORT"
 healthcheckPath = "/"
 healthcheckTimeout = 100
-restartPolicyType = "ON_FAILURE"
+
+[[deploy.envs]]
+key = "NIXPACKS_PYTHON_VERSION"
+value = "3.10"
+
+[[deploy.envs]]
+key = "PYTHONUNBUFFERED"
+value = "1"
