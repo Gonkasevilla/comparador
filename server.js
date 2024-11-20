@@ -10,6 +10,16 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'healthy' });
+});
+
+// Root path para Railway healthcheck y servir el frontend
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 const PYTHON_PATH = process.env.RAILWAY_ENVIRONMENT 
     ? '/opt/venv/bin/python3'
     : 'python';
@@ -42,7 +52,9 @@ app.post('/api/compare', async (req, res) => {
     console.log('Ruta del analizador:', ANALYZER_PATH);
 
     try {
-        const pythonProcess = spawn(PYTHON_PATH, [ANALYZER_PATH, ...urls]);
+        const pythonProcess = spawn(PYTHON_PATH, [ANALYZER_PATH, ...urls], {
+            env: { ...process.env, PYTHONUNBUFFERED: '1' }
+        });
 
         let outputData = '';
         let errorOutput = '';
@@ -61,8 +73,6 @@ app.post('/api/compare', async (req, res) => {
 
         pythonProcess.on('close', (code) => {
             console.log('Código de salida Python:', code);
-            console.log('Directorio actual:', process.cwd());
-            console.log('Contenido del directorio:', fs.readdirSync(process.cwd()));
             
             try {
                 let jsonData;
@@ -112,11 +122,9 @@ app.post('/api/compare', async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Servidor corriendo en puerto ${PORT}`);
     console.log('Entorno:', process.env.RAILWAY_ENVIRONMENT || 'local');
     console.log('Python Path:', PYTHON_PATH);
     console.log('Analyzer Path:', ANALYZER_PATH);
-    console.log('Directorio actual:', process.cwd());
-    console.log('Contenido del directorio:', fs.readdirSync(process.cwd()));
 });
