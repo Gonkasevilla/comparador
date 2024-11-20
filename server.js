@@ -3,6 +3,21 @@ const cors = require('cors');
 const { spawn } = require('child_process');
 const path = require('path');
 
+// Verificar Python al inicio
+const verifyPython = () => {
+    return new Promise((resolve, reject) => {
+        const pythonCheck = spawn('python3', ['--version']);
+        pythonCheck.on('close', (code) => {
+            if (code === 0) {
+                console.log('Python verificado correctamente');
+                resolve();
+            } else {
+                reject(new Error('Python no está disponible'));
+            }
+        });
+    });
+};
+
 const app = express();
 
 app.use(cors());
@@ -43,8 +58,15 @@ app.post('/api/compare', (req, res) => {
     });
 });
 
-// Iniciar servidor
+// Iniciar servidor solo después de verificar Python
 const port = process.env.PORT || 3000;
-app.listen(port, '0.0.0.0', () => {
-    console.log(`Servidor iniciado en puerto ${port}`);
-});
+verifyPython()
+    .then(() => {
+        app.listen(port, '0.0.0.0', () => {
+            console.log(`Servidor iniciado en puerto ${port}`);
+        });
+    })
+    .catch(error => {
+        console.error('Error al iniciar:', error);
+        process.exit(1);
+    });
