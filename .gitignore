@@ -1,4 +1,8 @@
 node_modules/
+.venv/
+backup/
+browser_data/
+*.png
 .env
 __pycache__/
 *.pyc
