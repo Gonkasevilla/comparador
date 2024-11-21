@@ -161,54 +161,51 @@ class ProductAnalyzer:
 
 def compare_products(self, products_info, user_context=None):
     try:
-        context_part = f"\nTeniendo en cuenta que el usuario busca: {user_context}" if user_context else ""
-        
+        context_part = f"\nEl usuario está interesado en: {user_context}." if user_context else ""
+
         prompt = f"""
-        Como experto asesor de compras, analiza estos productos:{context_part}
+        Soy un experto en compras y te ayudaré a decidir entre estos productos.{context_part}
 
-        {products_info}
-
-        Proporciona una comparativa natural y práctica con este formato:
+        Aquí tienes la comparativa que pediste:
 
         ### 💡 RECOMENDACIÓN RÁPIDA
-        • **La mejor opción es** [producto] porque [razón simple y directa]
-        • **También podrías considerar** [otro producto] si [condición específica]
+        • **Mejor opción:** [Producto A] porque [razón directa y clara].
+        • **Otra opción interesante:** [Producto B], especialmente si [razón específica].
 
-        ### 👤 PERFIL IDEAL
-        **Primer producto es perfecto para:**
-        • Usuarios que [beneficio principal]
-        • Personas que [ventaja específica]
-        • Aquellos que [característica importante]
+        ### 👤 ¿PARA QUIÉN ES CADA PRODUCTO?
+        **Producto A:**
+        • Ideal para quienes [beneficio principal].
+        • Perfecto para [tipo de usuario o contexto].
+        • Excelente opción si necesitas [característica clave].
 
-        **Segundo producto es ideal para:**
-        • Usuarios que [beneficio principal]
-        • Personas que [ventaja específica]
-        • Aquellos que [característica importante]
+        **Producto B:**
+        • Recomendado para [beneficio principal].
+        • Mejor opción para quienes buscan [ventaja específica].
+        • Adecuado para [tipo de situación].
 
-        ### 📊 DIFERENCIAS IMPORTANTES
-        • **Rendimiento:** [comparación clara]
-        • **Diseño y Calidad:** [diferencias principales]
-        • **Características Especiales:** [aspectos únicos]
+        ### 📊 DIFERENCIAS CLAVE
+        • **Rendimiento:** [compara ventajas de ambos productos].
+        • **Diseño:** [detalla diferencias visibles o funcionales].
+        • **Extras:** [comenta características únicas o destacables].
 
         ### 💰 RELACIÓN CALIDAD-PRECIO
-        • **Primer producto:** [valor por dinero]
-        • **Segundo producto:** [valor por dinero]
-        • **Comparativa:** [análisis de la inversión]
+        • **Producto A:** [valor y beneficios por el precio].
+        • **Producto B:** [valor y beneficios por el precio].
+        • **Resumen:** [cuál ofrece mejor relación calidad-precio].
 
         ### 🤝 CONSEJO FINAL
-        [Recomendación clara y personalizada considerando el contexto del usuario]
+        Basándome en lo que buscas, te recomiendo [producto recomendado] porque [razón final]. Espero que esta comparativa te ayude a decidir.
         """
 
         messages = [
             {
                 "role": "system",
-                "content": """Eres un experto que asesora en compras de manera clara y práctica.
-                - Usa un formato consistente con viñetas
-                - Mantén los emojis en los títulos de sección
-                - Usa negritas (**texto**) para destacar puntos clave
-                - Un solo tipo de viñeta (•) para todas las listas
-                - Lenguaje natural y directo
-                - Recomendaciones claras y justificadas"""
+                "content": """Eres un asesor de compras amable y confiable.
+                - Habla como un amigo experto.
+                - Usa un lenguaje simple, claro y positivo.
+                - Organiza las ideas con listas y emojis en los títulos.
+                - Usa negritas (**texto**) para resaltar puntos clave.
+                - Da ejemplos prácticos y enfócate en los beneficios reales."""
             },
             {
                 "role": "user",
@@ -216,18 +213,12 @@ def compare_products(self, products_info, user_context=None):
             }
         ]
 
-        response = self.client.chat.completions.create(
-            model="llama-3.1-sonar-large-128k-online",
-            messages=messages,
-            temperature=0.3,
-            max_tokens=2000
-        )
-
-        return response.choices[0].message.content
+        return messages
 
     except Exception as e:
-        print(f"Error en comparación: {str(e)}")
+        print(f"Error en la generación del prompt: {str(e)}")
         return None
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Analizar y comparar productos')
