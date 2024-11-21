@@ -1,6 +1,107 @@
-/* Mantener todo el CSS existente y añadir al final: */
+:root {
+    --primary-color: #4C6FFF;
+    --primary-light: #E8EDFF;
+    --primary-dark: #3B5BDB;
+    --success-color: #22C55E;
+    --error-color: #EF4444;
+    --text-color: #2D3958;
+    --text-light: #64748B;
+    --background: #F7F9FC;
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
 
-/* Estilos para el campo de contexto */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+body {
+    background-color: var(--background);
+    color: var(--text-color);
+    line-height: 1.6;
+    padding: 2rem;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Encabezado */
+.app-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.app-header h1 {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.app-header p {
+    color: var(--text-light);
+    font-size: 1.1rem;
+}
+
+/* Features */
+.features {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.feature {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+/* Formulario */
+.comparison-form {
+    background: white;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 2rem;
+}
+
+.input-group {
+    margin-bottom: 1.5rem;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+input {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid #E2E8F0;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+/* Campo de contexto */
 .context-group {
     background-color: var(--primary-light);
     border-radius: 0.75rem;
@@ -23,6 +124,7 @@ textarea {
     background-color: white;
     resize: vertical;
     transition: all 0.3s ease;
+    font-family: inherit;
 }
 
 textarea:focus {
@@ -36,7 +138,106 @@ textarea::placeholder {
     opacity: 0.7;
 }
 
-/* Estado de carga mejorado */
+/* Botones */
+.add-product-btn, .compare-btn {
+    width: 100%;
+    padding: 1rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.add-product-btn {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.add-product-btn:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.compare-btn {
+    background-color: #E2E8F0;
+    color: var(--text-light);
+    cursor: not-allowed;
+    margin-top: 1rem;
+}
+
+.compare-btn.active {
+    background-color: var(--success-color);
+    color: white;
+    cursor: pointer;
+}
+
+.compare-btn.active:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Lista de productos */
+.products-list {
+    display: grid;
+    gap: 1rem;
+    margin: 2rem 0;
+}
+
+.product-card {
+    background-color: white;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    transition: all 0.3s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.product-info {
+    flex-grow: 1;
+}
+
+.product-name {
+    font-weight: 500;
+    color: var(--text-color);
+    margin-bottom: 0.25rem;
+}
+
+.product-url {
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.delete-product {
+    background: none;
+    border: none;
+    color: var(--text-light);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    transition: all 0.3s ease;
+}
+
+.delete-product:hover {
+    color: var(--error-color);
+    background-color: #FEE2E2;
+}
+
+/* Estado de carga */
 .loading {
     text-align: center;
     padding: 2rem;
@@ -62,8 +263,56 @@ textarea::placeholder {
     animation: pulse 2s ease-in-out infinite;
 }
 
+/* Resultado del análisis */
+.comparison-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: var(--shadow-md);
+    margin-top: 2rem;
+    animation: slideUp 0.5s ease-out;
+}
+
+/* Animaciones */
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
 @keyframes pulse {
     0% { opacity: 0.6; }
     50% { opacity: 1; }
     100% { opacity: 0.6; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    body {
+        padding: 1rem;
+    }
+    
+    .features {
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .comparison-form {
+        padding: 1.5rem;
+    }
 }
