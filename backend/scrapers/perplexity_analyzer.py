@@ -159,68 +159,75 @@ class ProductAnalyzer:
             print(f"Error obteniendo imagen: {str(e)}")
             return None
 
-def compare_products(self, products_info, user_context=None):
-    try:
-        context_part = f"\nEl usuario está interesado en: {user_context}." if user_context else ""
+    def compare_products(self, products_info, user_context=None):
+        try:
+            context_part = f"\nEl usuario está interesado en: {user_context}." if user_context else ""
+            
+            prompt = f"""
+            Soy un experto en compras y te ayudaré a decidir entre estos productos.{context_part}
 
-        prompt = f"""
-        Soy un experto en compras y te ayudaré a decidir entre estos productos.{context_part}
+            {products_info}
 
-        Aquí tienes la comparativa que pediste:
+            Proporciona una comparativa detallada con este formato:
 
-        ### 💡 RECOMENDACIÓN RÁPIDA
-        • **Mejor opción:** [Producto A] porque [razón directa y clara].
-        • **Otra opción interesante:** [Producto B], especialmente si [razón específica].
+            ### 💡 RECOMENDACIÓN RÁPIDA
+            • **Mejor opción:** [producto] porque [razón directa y clara].
+            • **Otra opción interesante:** [producto], especialmente si [razón específica].
 
-        ### 👤 ¿PARA QUIÉN ES CADA PRODUCTO?
-        **Producto A:**
-        • Ideal para quienes [beneficio principal].
-        • Perfecto para [tipo de usuario o contexto].
-        • Excelente opción si necesitas [característica clave].
+            ### 👤 ¿PARA QUIÉN ES CADA PRODUCTO?
+            **Primer producto:**
+            • Ideal para quienes [beneficio principal]
+            • Perfecto para [tipo de usuario o contexto]
+            • Excelente opción si necesitas [característica clave]
 
-        **Producto B:**
-        • Recomendado para [beneficio principal].
-        • Mejor opción para quienes buscan [ventaja específica].
-        • Adecuado para [tipo de situación].
+            **Segundo producto:**
+            • Recomendado para [beneficio principal]
+            • Mejor opción para quienes buscan [ventaja específica]
+            • Adecuado para [tipo de situación]
 
-        ### 📊 DIFERENCIAS CLAVE
-        • **Rendimiento:** [compara ventajas de ambos productos].
-        • **Diseño:** [detalla diferencias visibles o funcionales].
-        • **Extras:** [comenta características únicas o destacables].
+            ### 📊 DIFERENCIAS CLAVE
+            • **Rendimiento:** [compara ventajas de ambos]
+            • **Diseño:** [detalla diferencias visibles o funcionales]
+            • **Extras:** [comenta características únicas]
 
-        ### 💰 RELACIÓN CALIDAD-PRECIO
-        • **Producto A:** [valor y beneficios por el precio].
-        • **Producto B:** [valor y beneficios por el precio].
-        • **Resumen:** [cuál ofrece mejor relación calidad-precio].
+            ### 💰 RELACIÓN CALIDAD-PRECIO
+            • **Primer producto:** [valor por el precio]
+            • **Segundo producto:** [valor por el precio]
+            • **Resumen:** [cuál ofrece mejor relación]
 
-        ### 🤝 CONSEJO FINAL
-        Basándome en lo que buscas, te recomiendo [producto recomendado] porque [razón final]. Espero que esta comparativa te ayude a decidir.
-        """
+            ### 🤝 CONSEJO FINAL
+            [Recomendación personalizada considerando el contexto del usuario]
+            """
 
-        messages = [
-    {
-        "role": "system",
-        "content": """Eres un asesor de compras amable, cercano y confiable.
-        - Habla como si estuvieras ayudando a un amigo a elegir el mejor producto.
-        - Usa un lenguaje simple, claro y positivo, evitando jerga técnica.
-        - Organiza las ideas con listas y emojis en los títulos para que sean fáciles de entender.
-        - Resalta puntos clave con negritas (**texto**) y da ejemplos claros y prácticos para respaldar tus recomendaciones.
-        - Usa un tono emocionado y útil, enfocándote en lo que hace especial cada producto y cómo mejora la vida del usuario.
-        - Sé breve pero completo. Evita abrumar al usuario con detalles innecesarios."""
-    },
-    {
-        "role": "user",
-        "content": prompt
-    }
-]
+            messages = [
+                {
+                    "role": "system",
+                    "content": """Eres un asesor de compras amable y cercano.
+                    - Habla como si ayudaras a un amigo a elegir
+                    - Usa lenguaje simple y claro
+                    - Organiza con listas y emojis en títulos
+                    - Resalta puntos clave con negritas
+                    - Sé conciso pero completo
+                    - Enfócate en beneficios prácticos"""
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
 
+            response = self.client.chat.completions.create(
+                model="llama-3.1-sonar-large-128k-online",
+                messages=messages,
+                temperature=0.3,
+                max_tokens=2000
+            )
 
-        return messages
+            return response.choices[0].message.content
 
-    except Exception as e:
-        print(f"Error en la generación del prompt: {str(e)}")
-        return None
-
+        except Exception as e:
+            print(f"Error en la comparación: {str(e)}")
+            return None
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Analizar y comparar productos')

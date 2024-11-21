@@ -1,4 +1,3 @@
-// Esperar a que el DOM esté cargado
 document.addEventListener('DOMContentLoaded', () => {
     const comparisonForm = document.querySelector('.comparison-form');
     const productUrlInput = document.getElementById('productUrl');
@@ -10,7 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const products = [];
     
-    // Mensajes de carga divertidos
     const loadingMessages = [
         "🛍️ Visitando las tiendas por ti...",
         "📦 Haciendo unboxing para que tú no tengas que hacerlo...",
@@ -30,7 +28,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const card = document.createElement('div');
         card.className = 'product-card animate__animated animate__fadeIn';
         
-        // Extraer el nombre del producto de la URL
         const urlObj = new URL(url);
         const productName = urlObj.pathname
             .split('/')
@@ -75,7 +72,6 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     };
 
-    // Manejadores de eventos
     addProductBtn.addEventListener('click', () => {
         const url = productUrlInput.value.trim();
         if (!url) {
@@ -112,7 +108,6 @@ document.addEventListener('DOMContentLoaded', () => {
         showLoadingMessage();
         let currentMessageIndex = 0;
         
-        // Cambiar mensaje de carga cada 3 segundos
         const messageInterval = setInterval(() => {
             const loadingMessage = document.querySelector('.loading-message');
             if (loadingMessage) {
@@ -140,14 +135,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(data.error);
             }
 
+            const formattedAnalysis = data.analysis
+                .replace(/### (.*?)$/gm, (match, title) => {
+                    const titleWithEmoji = title.includes('💡') ? title : title;
+                    return `<h3>${titleWithEmoji}</h3>`;
+                })
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/•\s/g, '')
+                .split('\n').filter(line => line.trim()).join('\n');
+
             comparisonResult.innerHTML = `
                 <div class="comparison-content animate__animated animate__fadeIn">
-                    ${data.analysis}
+                    ${formattedAnalysis}
                 </div>
             `;
 
-            // Scroll suave hasta el resultado
-            comparisonResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            comparisonResult.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start'
+            });
 
         } catch (error) {
             clearInterval(messageInterval);
