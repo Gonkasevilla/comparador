@@ -273,6 +273,66 @@ textarea::placeholder {
     animation: slideUp 0.5s ease-out;
 }
 
+/* Estilos para encabezados */
+.comparison-content h1,
+.comparison-content h2,
+.comparison-content h3 {
+    font-weight: bold;
+    color: var(--primary-color);
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+
+.comparison-content h1 {
+    font-size: 2rem;
+}
+
+.comparison-content h2 {
+    font-size: 1.75rem;
+}
+
+.comparison-content h3 {
+    font-size: 1.5rem;
+}
+
+/* Estilos para listas */
+.comparison-content ul {
+    margin-left: 1.5rem;
+    list-style: disc;
+}
+
+.comparison-content li {
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+}
+
+/* Estilos para negritas */
+.comparison-content strong {
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+/* Estilos para emojis en títulos */
+.comparison-content h3::before {
+    content: "💡";
+    margin-right: 0.5rem;
+    font-size: 1.2rem;
+    vertical-align: middle;
+}
+
+/* Párrafos */
+.comparison-content p {
+    margin-bottom: 1rem;
+    color: var(--text-color);
+    line-height: 1.8;
+}
+
+/* Espaciado general */
+.comparison-content {
+    line-height: 1.6;
+}
+
 /* Animaciones */
 @keyframes spin {
     to { transform: rotate(360deg); }
