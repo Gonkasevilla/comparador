@@ -138,56 +138,68 @@ class ProductAnalyzer:
             return None
 
     def compare_products(self, products_info):
-        """Compara productos con enfoque en uso real y formato mejorado"""
+        """Compara productos con enfoque en uso real y experiencia de usuario"""
         try:
             prompt = f"""
-            Como experto asesor de compras, compara estos productos:
+            Como experto asesor que ayuda a amigos a elegir productos, analiza y compara:
 
             {products_info}
 
             Estructura tu respuesta exactamente así:
 
-            ### 🎯 RESUMEN RÁPIDO
-            **¿Cuál elegir?** [Una frase clara y directa sobre qué producto es mejor para cada tipo de usuario]
+            ### 📌 EN RESUMEN
+            **Si buscas la mejor opción calidad-precio:** [Recomendación directa]
+            **Si quieres lo mejor sin importar el precio:** [Recomendación directa]
+            **Si estás empezando y quieres algo fiable:** [Recomendación directa]
 
-            ### 👤 PERFIL IDEAL
-            • El primer producto es perfecto para:
-              - **Gamers** que valoran [característica principal]
-              - **Usuarios** que buscan [beneficio principal]
-              - **Personas** que necesitan [ventaja específica]
+            ### 👥 ¿PARA QUIÉN ES CADA UNO?
+            • El primer producto es ideal si:
+              - Eres el tipo de persona que [describe situación cotidiana]
+              - Tu prioridad es [beneficio principal para el usuario]
+              - Valoras especialmente [característica desde punto de vista del usuario]
 
-            • El segundo producto es perfecto para:
-              - **Gamers** que prefieren [característica principal]
-              - **Usuarios** que quieren [beneficio principal]
-              - **Personas** que buscan [ventaja específica]
+            • El segundo producto es perfecto cuando:
+              - Tu día a día incluye [describe situación cotidiana]
+              - Te importa mucho [beneficio principal para el usuario]
+              - Necesitas [característica desde punto de vista del usuario]
 
-            ### ⚡ DIFERENCIAS IMPORTANTES
-            • **Rendimiento y Velocidad:**
-              - El primer producto: [explicar características y beneficios]
-              - El segundo producto: [explicar características y beneficios]
+            ### 🔍 COMPARATIVA PRÁCTICA
+            • **En el uso diario:**
+              - Primer producto: [Cómo se traduce en experiencia real de uso]
+              - Segundo producto: [Cómo se traduce en experiencia real de uso]
 
-            • **Diseño y Calidad:**
-              - El primer producto: [explicar características importantes]
-              - El segundo producto: [explicar características importantes]
+            • **Puntos fuertes y débiles:**
+              - Primer producto ✅: [3-4 ventajas realmente importantes]
+              - Primer producto ⚠️: [1-2 aspectos a considerar]
+              - Segundo producto ✅: [3-4 ventajas realmente importantes]
+              - Segundo producto ⚠️: [1-2 aspectos a considerar]
 
-            • **Características Especiales:**
-              - El primer producto: [mencionar funciones únicas]
-              - El segundo producto: [mencionar funciones únicas]
+            • **Experiencia de uso:**
+              - Primer producto: [Cómo se siente usarlo en el día a día]
+              - Segundo producto: [Cómo se siente usarlo en el día a día]
 
-            ### 💡 CONSEJO PERSONAL
-            **Mi recomendación sincera:** [Da un consejo claro sobre qué producto elegir según el tipo de usuario, explicando el porqué de forma natural]
+            ### 💡 MI CONSEJO SINCERO
+            [Escribe un párrafo personal, como si hablaras con un amigo, explicando qué producto recomendarías según diferentes situaciones. Usa ejemplos reales y sé específico sobre qué tipo de usuario se beneficiaría más de cada opción.]
+
+            ### 🎯 RECOMENDACIÓN FINAL
+            • **Elige el primer producto si:** [lista de 2-3 situaciones muy específicas]
+            • **Elige el segundo producto si:** [lista de 2-3 situaciones muy específicas]
+            • **Considera otras opciones si:** [situaciones donde ninguno sería ideal]
+
+            Usa lenguaje coloquial pero profesional, como si estuvieras aconsejando a un amigo. Evita tecnicismos innecesarios y céntrate en la experiencia real de uso.
             """
 
             messages = [
                 {
                     "role": "system",
-                    "content": """Eres un experto que ayuda a elegir productos.
-                    - Usa un tono natural y amigable
-                    - Mantén los emojis en los títulos
-                    - Usa negritas (**) para destacar puntos clave
-                    - Usa viñetas como se indica en el formato
-                    - Explica los beneficios prácticos
-                    - Da recomendaciones claras y directas"""
+                    "content": """Eres un experto amigable que ayuda a personas reales a elegir productos.
+                    - Habla como si estuvieras charlando con un amigo
+                    - Usa ejemplos de la vida real y situaciones cotidianas
+                    - Evita especificaciones técnicas a menos que sean realmente relevantes
+                    - Explica los beneficios en términos de experiencia de usuario
+                    - Da recomendaciones claras basadas en casos de uso reales
+                    - Mantén los emojis y el formato especificado
+                    - Usa lenguaje cercano pero profesional"""
                 },
                 {
                     "role": "user",
@@ -198,8 +210,8 @@ class ProductAnalyzer:
             response = self.client.chat.completions.create(
                 model="llama-3.1-sonar-large-128k-online",
                 messages=messages,
-                temperature=0.3,
-                max_tokens=2000
+                temperature=0.4,
+                max_tokens=2500
             )
 
             return response.choices[0].message.content
