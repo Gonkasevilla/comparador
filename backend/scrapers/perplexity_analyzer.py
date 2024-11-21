@@ -159,78 +159,75 @@ class ProductAnalyzer:
             print(f"Error obteniendo imagen: {str(e)}")
             return None
 
-    def compare_products(self, products_info, user_context=None):
-        """Compara productos con enfoque en uso real y contexto del usuario"""
-        try:
-            context_part = f"\nTeniendo en cuenta que el usuario busca: {user_context}" if user_context else ""
-            
-            prompt = f"""
-            Como experto asesor de compras, analiza estos productos:{context_part}
+def compare_products(self, products_info, user_context=None):
+    try:
+        context_part = f"\nTeniendo en cuenta que el usuario busca: {user_context}" if user_context else ""
+        
+        prompt = f"""
+        Como experto asesor de compras, analiza estos productos:{context_part}
 
-            {products_info}
+        {products_info}
 
-            Proporciona una comparativa natural y práctica con este formato:
+        Proporciona una comparativa natural y práctica con este formato:
 
-            ### 💡 RECOMENDACIÓN RÁPIDA
-            **La mejor opción es** [producto] porque [razón simple y directa]
-            **También puedes considerar** [otro producto] si [condición específica]
+        ### 💡 RECOMENDACIÓN RÁPIDA
+        • **La mejor opción es** [producto] porque [razón simple y directa]
+        • **También podrías considerar** [otro producto] si [condición específica]
 
-            ### 👤 PARA QUIÉN ES CADA PRODUCTO
-            • **El primer producto** es perfecto si:
-              - Buscas [beneficio principal]
-              - Necesitas [ventaja específica]
-              - Valoras [característica importante]
+        ### 👤 PERFIL IDEAL
+        **Primer producto es perfecto para:**
+        • Usuarios que [beneficio principal]
+        • Personas que [ventaja específica]
+        • Aquellos que [característica importante]
 
-            • **El segundo producto** es ideal si:
-              - Prefieres [beneficio principal]
-              - Quieres [ventaja específica]
-              - Te importa [característica importante]
+        **Segundo producto es ideal para:**
+        • Usuarios que [beneficio principal]
+        • Personas que [ventaja específica]
+        • Aquellos que [característica importante]
 
-            ### 💰 RELACIÓN CALIDAD-PRECIO
-            • [Análisis del valor por dinero de cada producto]
-            • [Justificación de la inversión]
+        ### 📊 DIFERENCIAS IMPORTANTES
+        • **Rendimiento:** [comparación clara]
+        • **Diseño y Calidad:** [diferencias principales]
+        • **Características Especiales:** [aspectos únicos]
 
-            ### 🎯 EN LA PRÁCTICA
-            • **Primer producto:**
-              - [Situaciones reales de uso]
-              - [Beneficios en el día a día]
+        ### 💰 RELACIÓN CALIDAD-PRECIO
+        • **Primer producto:** [valor por dinero]
+        • **Segundo producto:** [valor por dinero]
+        • **Comparativa:** [análisis de la inversión]
 
-            • **Segundo producto:**
-              - [Situaciones reales de uso]
-              - [Beneficios en el día a día]
+        ### 🤝 CONSEJO FINAL
+        [Recomendación clara y personalizada considerando el contexto del usuario]
+        """
 
-            ### 🤝 CONSEJO FINAL
-            [Recomendación clara y directa, considerando el contexto si existe]
-            """
+        messages = [
+            {
+                "role": "system",
+                "content": """Eres un experto que asesora en compras de manera clara y práctica.
+                - Usa un formato consistente con viñetas
+                - Mantén los emojis en los títulos de sección
+                - Usa negritas (**texto**) para destacar puntos clave
+                - Un solo tipo de viñeta (•) para todas las listas
+                - Lenguaje natural y directo
+                - Recomendaciones claras y justificadas"""
+            },
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ]
 
-            messages = [
-                {
-                    "role": "system",
-                    "content": """Eres un experto que asesora en compras de manera cercana y práctica.
-                    - Usa lenguaje natural y ejemplos reales
-                    - Evita términos demasiado técnicos
-                    - Céntrate en beneficios prácticos
-                    - Da recomendaciones claras y justificadas
-                    - Adapta el consejo al contexto del usuario"""
-                },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
+        response = self.client.chat.completions.create(
+            model="llama-3.1-sonar-large-128k-online",
+            messages=messages,
+            temperature=0.3,
+            max_tokens=2000
+        )
 
-            response = self.client.chat.completions.create(
-                model="llama-3.1-sonar-large-128k-online",
-                messages=messages,
-                temperature=0.3,
-                max_tokens=2000
-            )
+        return response.choices[0].message.content
 
-            return response.choices[0].message.content
-
-        except Exception as e:
-            print(f"Error en comparación: {str(e)}")
-            return None
+    except Exception as e:
+        print(f"Error en comparación: {str(e)}")
+        return None
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Analizar y comparar productos')
