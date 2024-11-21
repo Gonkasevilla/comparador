@@ -21,10 +21,10 @@ const verifyPython = () => {
 const app = express();
 
 app.use(cors());
-app.use(express.json({limit: '1mb'}));
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Health check endpoint
+// Health check
 app.get('/health', (_, res) => res.send('OK'));
 
 // Ruta raíz
@@ -32,49 +32,17 @@ app.get('/', (_, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Validación de URLs
-const isValidUrl = (url) => {
-    try {
-        new URL(url);
-        return true;
-    } catch {
-        return false;
-    }
-};
-
-// API route con validación mejorada
+// API route
 app.post('/api/compare', (req, res) => {
     const { urls, userContext } = req.body;
+    let hasResponded = false;
 
-    // Validación de URLs
     if (!urls || !Array.isArray(urls)) {
-        return res.status(400).json({ error: 'Se requiere un array de URLs' });
-    }
-
-    if (urls.length < 2) {
-        return res.status(400).json({ error: 'Se requieren al menos dos URLs para comparar' });
-    }
-
-    if (urls.length > 5) {
-        return res.status(400).json({ error: 'Máximo 5 productos para comparar' });
-    }
-
-    if (!urls.every(isValidUrl)) {
-        return res.status(400).json({ error: 'Una o más URLs no son válidas' });
-    }
-
-    // Validación del contexto
-    if (userContext && typeof userContext !== 'string') {
-        return res.status(400).json({ error: 'El contexto debe ser texto' });
-    }
-
-    if (userContext && userContext.length > 500) {
-        return res.status(400).json({ error: 'El contexto es demasiado largo (máximo 500 caracteres)' });
+        return res.status(400).json({ error: 'URLs inválidas' });
     }
 
     console.log('📊 Analizando productos con contexto:', userContext || 'Sin contexto');
 
-    // Crear argumentos para Python
     const pythonArgs = [
         path.join(__dirname, 'perplexity_analyzer.py'),
         ...urls
@@ -86,19 +54,8 @@ app.post('/api/compare', (req, res) => {
     }
 
     const pythonProcess = spawn('python3', pythonArgs);
-
     let data = '';
     let errorOutput = '';
-    let timeout;
-
-    // Establecer timeout de 30 segundos
-    timeout = setTimeout(() => {
-        pythonProcess.kill();
-        res.status(504).json({ 
-            error: 'El análisis ha tardado demasiado tiempo',
-            details: 'Timeout de 30 segundos excedido'
-        });
-    }, 30000);
 
     pythonProcess.stdout.on('data', chunk => {
         const chunkStr = chunk.toString();
@@ -112,9 +69,24 @@ app.post('/api/compare', (req, res) => {
         errorOutput += errorStr;
     });
 
+    // Manejar timeout
+    const timeout = setTimeout(() => {
+        if (!hasResponded) {
+            hasResponded = true;
+            pythonProcess.kill();
+            res.status(504).json({ 
+                error: 'El análisis ha tardado demasiado tiempo',
+                details: 'Timeout de 30 segundos excedido'
+            });
+        }
+    }, 30000);
+
     pythonProcess.on('close', code => {
         clearTimeout(timeout);
         console.log('📋 Código de salida Python:', code);
+
+        if (hasResponded) return;
+
         try {
             const match = data.match(/RESULT_JSON_START\n([\s\S]*?)\nRESULT_JSON_END/);
             if (!match) {
@@ -126,29 +98,34 @@ app.post('/api/compare', (req, res) => {
                 result.userContext = userContext;
             }
 
+            hasResponded = true;
             res.json(result);
         } catch (error) {
-            console.error('❌ Error procesando resultado:', error);
-            res.status(500).json({ 
-                error: 'Error al procesar el análisis',
-                details: errorOutput || error.message,
-                stdout: data
-            });
+            if (!hasResponded) {
+                hasResponded = true;
+                res.status(500).json({ 
+                    error: 'Error al procesar el análisis',
+                    details: errorOutput || error.message,
+                    stdout: data
+                });
+            }
         }
     });
 
     pythonProcess.on('error', (error) => {
         clearTimeout(timeout);
-        console.error('❌ Error al ejecutar Python:', error);
-        res.status(500).json({ 
-            error: 'Error al ejecutar el analizador',
-            details: error.message
-        });
+        if (!hasResponded) {
+            hasResponded = true;
+            res.status(500).json({ 
+                error: 'Error al ejecutar el analizador',
+                details: error.message
+            });
+        }
     });
 });
 
 // Iniciar servidor
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 8080;
 verifyPython()
     .then(() => {
         app.listen(port, '0.0.0.0', () => {
