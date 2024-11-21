@@ -5,66 +5,76 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Product Comparator</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
 </head>
 <body>
-    <div class="ad-banner">Advertisement Space</div>
-    
     <div class="main-container">
-        <aside class="sidebar-left">Sidebar Ad</aside>
+        <aside class="sidebar-left"></aside>
         
         <main class="content">
             <header class="app-header">
                 <div class="logo-container">
-                    <i class="fas fa-balance-scale"></i>
+                    <i class="fas fa-robot"></i>
                     <h1>AI Product Comparator</h1>
                 </div>
-                <p class="subtitle">Experience the future of shopping decisions with our AI-powered comparison tool</p>
+                <p class="subtitle">Déjame ayudarte a elegir el producto perfecto</p>
                 
                 <div class="features">
                     <div class="feature">
-                        <i class="fas fa-bolt"></i>
-                        <span>Smart Analysis</span>
-                    </div>
-                    <div class="feature">
                         <i class="fas fa-brain"></i>
-                        <span>AI Powered</span>
+                        <span>Análisis Inteligente</span>
                     </div>
                     <div class="feature">
-                        <i class="fas fa-clock"></i>
-                        <span>Instant Results</span>
+                        <i class="fas fa-robot"></i>
+                        <span>IA Avanzada</span>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-bolt"></i>
+                        <span>Resultados Instantáneos</span>
                     </div>
                 </div>
             </header>
 
-            <div class="comparison-form">
+            <form class="comparison-form">
                 <div class="input-group">
-                    <label>
+                    <label for="productUrl">
                         <i class="fas fa-link"></i>
-                        Product URL
+                        Añadir Producto
                     </label>
-                    <input type="url" id="productUrl" placeholder="https://example.com/product">
+                    <input type="text" id="productUrl" placeholder="Pega aquí la URL del producto">
                 </div>
 
-                <button class="add-product-btn">
+                <div class="input-group context-group">
+                    <label for="userContext">
+                        <i class="fas fa-lightbulb"></i>
+                        ¿Cuál es tu necesidad?
+                    </label>
+                    <textarea 
+                        id="userContext" 
+                        placeholder="Ejemplo: Busco un portátil para mi hijo que empieza la universidad y necesita hacer trabajos y algo de diseño gráfico"
+                        rows="3"
+                    ></textarea>
+                </div>
+
+                <button type="button" class="add-product-btn">
                     <i class="fas fa-plus"></i>
-                    Add Product
+                    Añadir Producto
                 </button>
-            </div>
+            </form>
 
             <div class="products-list"></div>
-            
+
             <button class="compare-btn" disabled>
-                <i class="fas fa-check-circle"></i>
-                Compare Products
+                <i class="fas fa-balance-scale"></i>
+                Comparar Productos
             </button>
 
             <div class="comparison-result"></div>
         </main>
 
-        <aside class="sidebar-right">Sidebar Ad</aside>
+        <aside class="sidebar-right"></aside>
     </div>
-
     <script src="app.js"></script>
 </body>
 </html>

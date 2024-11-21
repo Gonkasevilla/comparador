@@ -1,9 +1,9 @@
-flask==3.0.0
-flask-cors==4.0.0
+# Eliminar flask y flask-cors ya que no los estamos usando
+# Eliminar bs4 ya que beautifulsoup4 ya lo incluye
+# El resto está bien
+
 openai==1.3.0
 python-dotenv==1.0.0
 requests==2.31.0
 beautifulsoup4==4.12.2
-gunicorn==21.2.0
-bs4==0.0.1
 aiohttp==3.8.6

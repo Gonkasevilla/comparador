@@ -1,28 +1,40 @@
+// Esperar a que el DOM esté cargado
 document.addEventListener('DOMContentLoaded', () => {
     const comparisonForm = document.querySelector('.comparison-form');
     const productUrlInput = document.getElementById('productUrl');
+    const userContextInput = document.getElementById('userContext');
     const addProductBtn = document.querySelector('.add-product-btn');
     const productsList = document.querySelector('.products-list');
     const compareBtn = document.querySelector('.compare-btn');
     const comparisonResult = document.querySelector('.comparison-result');
+
     const products = [];
+    
+    // Mensajes de carga divertidos
+    const loadingMessages = [
+        "🛍️ Visitando las tiendas por ti...",
+        "📦 Haciendo unboxing para que tú no tengas que hacerlo...",
+        "🤔 Consultando con expertos...",
+        "🔍 Analizando cada detalle...",
+        "📊 Comparando características...",
+        "💡 Pensando en tus necesidades..."
+    ];
 
     const updateCompareButton = () => {
         const isActive = products.length >= 2;
         compareBtn.classList.toggle('active', isActive);
         compareBtn.disabled = !isActive;
-        compareBtn.innerHTML = isActive ? 
-            '<i class="fas fa-magic"></i> Comparar Productos' : 
-            '<i class="fas fa-info-circle"></i> Añade al menos 2 productos';
     };
 
     const createProductCard = (url, index) => {
         const card = document.createElement('div');
-        card.className = 'product-card';
+        card.className = 'product-card animate__animated animate__fadeIn';
         
-        // Extraer nombre del producto de la URL
+        // Extraer el nombre del producto de la URL
         const urlObj = new URL(url);
-        const productName = urlObj.pathname.split('/').pop()
+        const productName = urlObj.pathname
+            .split('/')
+            .pop()
             .replace(/-/g, ' ')
             .replace(/\.html$/, '')
             .split(' ')
@@ -31,20 +43,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         card.innerHTML = `
             <div class="product-info">
-                <div class="product-name">${productName}</div>
-                <div class="product-site">
-                    <i class="fas fa-link"></i>
-                    ${urlObj.hostname.replace('www.', '')}
-                </div>
+                <p class="product-name">${productName}</p>
+                <small class="product-url">${urlObj.hostname}</small>
             </div>
-            <button class="delete-product" data-index="${index}" title="Eliminar producto">
+            <button class="delete-product" data-index="${index}">
                 <i class="fas fa-times"></i>
             </button>
         `;
-        
-        // Añadir animación de entrada
-        card.style.animation = 'slideIn 0.3s ease-out forwards';
-        
         return card;
     };
 
@@ -56,105 +61,34 @@ document.addEventListener('DOMContentLoaded', () => {
         updateCompareButton();
     };
 
-    const formatAnalysis = (analysis) => {
-        // Primero limpiamos el texto de asteriscos y convertimos a negrita HTML
-        let formattedText = analysis.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        
-        // Convertimos todos los guiones en puntos para las viñetas
-        formattedText = formattedText.replace(/^- /gm, '• ');
-    
-        const sections = formattedText.split('###').filter(section => section.trim());
-        
-        return `
-            <div class="analysis-container">
-                ${sections.map(section => {
-                    const [title, ...content] = section.split('\n').filter(line => line.trim());
-                    
-                    return `
-                        <div class="analysis-section ${title.toLowerCase().includes('resumen') ? 'highlight-section' : ''}">
-                            <h3 class="section-title ${title.includes('🎯') ? 'with-emoji' : ''}">
-                                ${title.trim()}
-                            </h3>
-                            <div class="section-content">
-                                ${content.map(line => {
-                                    if (line.trim().startsWith('•')) {
-                                        return `<div class="bullet-point">${line.trim()}</div>`;
-                                    } else if (line.trim().startsWith('✓')) {
-                                        return `<div class="advantage">${line.trim()}</div>`;
-                                    } else if (line.trim().startsWith('✗')) {
-                                        return `<div class="disadvantage">${line.trim()}</div>`;
-                                    } else {
-                                        return `<p>${line.trim()}</p>`;
-                                    }
-                                }).join('')}
-                            </div>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
-        `;
-    };
-
-    const loadingMessages = [
-        "🏃‍♂️ Visitando las tiendas por ti para probar el producto...",
-        "📦 Haciendo unboxing para que no tengas que hacerlo...",
-        "👴 Consultando con mi abuelo si le vale o no...",
-        "🤔 Comparando precios como si fuera mi propio dinero...",
-        "🔍 Leyendo la letra pequeña que nadie lee...",
-        "📱 Probando si resiste una caída (mejor yo que tú)...",
-        "🛒 Peleando en el Black Friday virtual por ti...",
-        "📊 Analizando más datos que mi ex en Instagram...",
-        "🤓 Leyendo todos los manuales (alguien tiene que hacerlo)...",
-        "🎮 Probando si sirve para gaming (por motivos científicos)..."
-    ];
-    
     const getRandomLoadingMessage = () => {
-        return loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
+        const randomIndex = Math.floor(Math.random() * loadingMessages.length);
+        return loadingMessages[randomIndex];
     };
-    
-    // Modificar la parte del loading en el evento click del compareBtn
-    compareBtn.addEventListener('click', async () => {
-        if (products.length < 2) return;
-    
+
+    const showLoadingMessage = () => {
         comparisonResult.innerHTML = `
-            <div class="loading-container">
-                <div class="loading-spinner"></div>
-                <div class="loading-message">${getRandomLoadingMessage()}</div>
-                <div class="loading-submessage">Esto puede tomar unos segundos...</div>
+            <div class="loading">
+                <div class="spinner"></div>
+                <p class="loading-message">${getRandomLoadingMessage()}</p>
             </div>
         `;
-    
-        // Cambiar el mensaje cada 3 segundos mientras carga
-        const messageInterval = setInterval(() => {
-            const loadingMessage = document.querySelector('.loading-message');
-            if (loadingMessage) {
-                loadingMessage.innerHTML = getRandomLoadingMessage();
-            }
-        }, 3000);
-    
-        try {
-            // ... resto del código de la comparación ...
-        } finally {
-            clearInterval(messageInterval);
-        }
-    });
+    };
 
+    // Manejadores de eventos
     addProductBtn.addEventListener('click', () => {
         const url = productUrlInput.value.trim();
-        
         if (!url) {
-            showNotification('Por favor, introduce la URL del producto', 'error');
+            alert('Por favor, introduce una URL de producto');
             return;
         }
-
         try {
             new URL(url);
             products.push(url);
             productUrlInput.value = '';
             updateProductsList();
-            showNotification('Producto añadido correctamente', 'success');
         } catch (e) {
-            showNotification('Por favor, introduce una URL válida', 'error');
+            alert('Por favor, introduce una URL válida');
         }
     });
 
@@ -166,29 +100,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     productsList.addEventListener('click', (e) => {
         if (e.target.closest('.delete-product')) {
-            const card = e.target.closest('.product-card');
-            card.style.animation = 'slideOut 0.3s ease-out forwards';
-            
-            card.addEventListener('animationend', () => {
-                const index = e.target.closest('.delete-product').dataset.index;
-                products.splice(index, 1);
-                updateProductsList();
-            });
+            const index = e.target.closest('.delete-product').dataset.index;
+            products.splice(index, 1);
+            updateProductsList();
         }
     });
 
     compareBtn.addEventListener('click', async () => {
         if (products.length < 2) return;
-
-        comparisonResult.innerHTML = `
-            <div class="loading-container">
-                <div class="loading-spinner"></div>
-                <div class="loading-text">
-                    <h3>Analizando productos</h3>
-                    <p>Nuestro experto está comparando los productos...</p>
-                </div>
-            </div>
-        `;
+        
+        showLoadingMessage();
+        let currentMessageIndex = 0;
+        
+        // Cambiar mensaje de carga cada 3 segundos
+        const messageInterval = setInterval(() => {
+            const loadingMessage = document.querySelector('.loading-message');
+            if (loadingMessage) {
+                currentMessageIndex = (currentMessageIndex + 1) % loadingMessages.length;
+                loadingMessage.textContent = loadingMessages[currentMessageIndex];
+            }
+        }, 3000);
 
         try {
             const response = await fetch('/api/compare', {
@@ -196,52 +127,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ urls: products })
+                body: JSON.stringify({
+                    urls: products,
+                    userContext: userContextInput.value.trim()
+                })
             });
-
+            
+            clearInterval(messageInterval);
             const data = await response.json();
 
             if (data.error) {
                 throw new Error(data.error);
             }
 
-            comparisonResult.innerHTML = formatAnalysis(data.analysis);
-            
+            comparisonResult.innerHTML = `
+                <div class="comparison-content animate__animated animate__fadeIn">
+                    ${data.analysis}
+                </div>
+            `;
+
             // Scroll suave hasta el resultado
             comparisonResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
         } catch (error) {
+            clearInterval(messageInterval);
             comparisonResult.innerHTML = `
-                <div class="error-container">
-                    <i class="fas fa-exclamation-circle"></i>
+                <div class="error animate__animated animate__fadeIn">
                     <h3>Ha ocurrido un error</h3>
-                    <p>${error.message || 'Error al comparar los productos'}</p>
-                    <button class="retry-button" onclick="location.reload()">
-                        <i class="fas fa-redo"></i> Intentar de nuevo
-                    </button>
+                    <p>${error.message || 'Error al realizar la comparación'}</p>
                 </div>
             `;
         }
     });
-
-    const showNotification = (message, type = 'info') => {
-        const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        notification.innerHTML = `
-            <i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'check-circle'}"></i>
-            ${message}
-        `;
-        
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.classList.add('show');
-            setTimeout(() => {
-                notification.classList.remove('show');
-                setTimeout(() => notification.remove(), 300);
-            }, 3000);
-        }, 100);
-    };
 
     updateCompareButton();
 });
