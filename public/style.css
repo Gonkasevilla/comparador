@@ -31,7 +31,62 @@ body {
     margin: 0 auto;
 }
 
-/* Encabezado */
+/* Tabs */
+.tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid var(--primary-light);
+    padding: 0.5rem;
+}
+
+.tab-button {
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 0.5rem 0.5rem 0 0;
+    background: none;
+    color: var(--text-light);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.tab-button:hover {
+    color: var(--primary-color);
+    background-color: var(--primary-light);
+}
+
+.tab-button.active {
+    color: var(--primary-color);
+    background-color: var(--primary-light);
+    position: relative;
+}
+
+.tab-button.active::after {
+    content: '';
+    position: absolute;
+    bottom: -0.5rem;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: var(--primary-color);
+}
+
+/* Tab Content */
+.tab-content {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Header */
 .app-header {
     text-align: center;
     margin-bottom: 3rem;
@@ -66,8 +121,8 @@ body {
     font-weight: 500;
 }
 
-/* Formulario */
-.comparison-form {
+/* Forms */
+.comparison-form, .advisor-form {
     background: white;
     padding: 2rem;
     border-radius: 1rem;
@@ -84,30 +139,33 @@ body {
     margin-bottom: 0.5rem;
     color: var(--text-color);
     font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-input {
+input, select, textarea {
     width: 100%;
     padding: 1rem;
     border: 2px solid #E2E8F0;
     border-radius: 0.5rem;
     font-size: 1rem;
     transition: all 0.3s ease;
+    background: white;
 }
 
-input:focus {
+input:focus, select:focus, textarea:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px var(--primary-light);
 }
 
-/* Campo de contexto */
+/* Context Group */
 .context-group {
     background-color: var(--primary-light);
     border-radius: 0.75rem;
     padding: 1.5rem;
     margin-top: 2rem;
-    transition: all 0.3s ease;
 }
 
 .context-group:hover {
@@ -115,31 +173,20 @@ input:focus {
 }
 
 textarea {
-    width: 100%;
-    padding: 1rem;
-    border: 2px solid transparent;
-    border-radius: 0.5rem;
-    font-size: 1rem;
-    min-height: 100px;
-    background-color: white;
+    min-height: 120px;
     resize: vertical;
-    transition: all 0.3s ease;
     font-family: inherit;
 }
 
-textarea:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px var(--primary-light);
+/* Budget Inputs */
+.budget-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
 }
 
-textarea::placeholder {
-    color: var(--text-light);
-    opacity: 0.7;
-}
-
-/* Botones */
-.add-product-btn, .compare-btn {
+/* Buttons */
+.add-product-btn, .compare-btn, .submit-btn {
     width: 100%;
     padding: 1rem;
     border: none;
@@ -154,12 +201,12 @@ textarea::placeholder {
     transition: all 0.3s ease;
 }
 
-.add-product-btn {
+.add-product-btn, .submit-btn {
     background-color: var(--primary-color);
     color: white;
 }
 
-.add-product-btn:hover {
+.add-product-btn:hover, .submit-btn:hover {
     background-color: var(--primary-dark);
     transform: translateY(-1px);
     box-shadow: var(--shadow-md);
@@ -183,7 +230,7 @@ textarea::placeholder {
     box-shadow: var(--shadow-md);
 }
 
-/* Lista de productos */
+/* Products List */
 .products-list {
     display: grid;
     gap: 1rem;
@@ -237,7 +284,7 @@ textarea::placeholder {
     background-color: #FEE2E2;
 }
 
-/* Estado de carga */
+/* Loading State */
 .loading {
     text-align: center;
     padding: 2rem;
@@ -263,10 +310,7 @@ textarea::placeholder {
     animation: pulse 2s ease-in-out infinite;
 }
 
-/* Resultado del análisis */
-/* Mantener todo el CSS existente hasta la sección .comparison-content */
-
-/* Resultado del análisis */
+/* Analysis Result */
 .comparison-content {
     background: white;
     padding: 2.5rem;
@@ -282,16 +326,12 @@ textarea::placeholder {
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    color: var(--text-color);
     font-size: 1.25rem;
     font-weight: 600;
-    color: var(--text-color);
     margin: 2rem 0 1rem;
     padding-bottom: 0.75rem;
     border-bottom: 2px solid var(--primary-light);
-}
-
-.comparison-content h3::before {
-    font-size: 1.2rem;
 }
 
 .comparison-content p {
@@ -325,7 +365,101 @@ textarea::placeholder {
     font-weight: 600;
 }
 
-/* Animaciones */
+/* History */
+.history-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.history-filters {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.filter-btn, .clear-history-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.filter-btn {
+    background: var(--primary-light);
+    color: var(--primary-color);
+}
+
+.filter-btn.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.clear-history-btn {
+    background: #FEE2E2;
+    color: var(--error-color);
+}
+
+.clear-history-btn:hover {
+    background: var(--error-color);
+    color: white;
+}
+
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.history-item {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.history-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.history-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.history-item-type {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    color: var(--primary-color);
+}
+
+.history-item-date {
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+.history-item-content {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--primary-light);
+}
+
+/* Animations */
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
@@ -358,13 +492,39 @@ textarea::placeholder {
         padding: 1rem;
     }
     
+    .tabs {
+        flex-direction: column;
+    }
+    
+    .tab-button {
+        width: 100%;
+        justify-content: center;
+    }
+    
     .features {
         flex-direction: column;
         align-items: center;
         gap: 1rem;
     }
     
-    .comparison-form {
+    .comparison-form, .advisor-form {
         padding: 1.5rem;
+    }
+    
+    .budget-inputs {
+        grid-template-columns: 1fr;
+    }
+    
+    .history-controls {
+        flex-direction: column;
+    }
+    
+    .history-filters {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+    
+    .filter-btn {
+        flex: 1;
     }
 }
