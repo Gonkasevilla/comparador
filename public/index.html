@@ -3,161 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Product Assistant</title>
+    <title>Comparador de Productos con IA</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
-        <!-- Tabs -->
+        <!-- Navegación por pestañas -->
         <div class="tabs">
-            <button class="tab-button active" data-tab="comparator">
-                <i class="fas fa-balance-scale"></i>
-                Comparador
+            <button class="tab-btn active" data-tab="comparator">
+                <i class="fas fa-exchange-alt"></i> Comparador
             </button>
-            <button class="tab-button" data-tab="advisor">
-                <i class="fas fa-magic"></i>
-                Recomendador
+            <button class="tab-btn" data-tab="advisor">
+                <i class="fas fa-magic"></i> Recomendador
             </button>
-            <button class="tab-button" data-tab="history">
-                <i class="fas fa-history"></i>
-                Historial
+            <button class="tab-btn" data-tab="history">
+                <i class="fas fa-history"></i> Historial
             </button>
         </div>
 
-        <!-- Comparator Tab -->
-        <div class="tab-content active" id="comparator">
-            <header class="app-header">
+        <!-- Pestaña del Comparador -->
+        <div id="comparator" class="tab-content active">
+            <div class="app-header">
                 <h1>AI Product Comparator</h1>
                 <p>Déjame ayudarte a elegir el producto perfecto</p>
-            </header>
+            </div>
 
             <div class="features">
                 <div class="feature">
                     <i class="fas fa-brain"></i>
-                    Análisis Inteligente
+                    <span>Análisis Inteligente</span>
                 </div>
                 <div class="feature">
                     <i class="fas fa-robot"></i>
-                    IA Avanzada
+                    <span>IA Avanzada</span>
                 </div>
                 <div class="feature">
                     <i class="fas fa-bolt"></i>
-                    Resultados Instantáneos
+                    <span>Resultados Instantáneos</span>
                 </div>
             </div>
 
-            <form class="comparison-form">
+            <div class="comparison-form">
                 <div class="input-group">
-                    <label><i class="fas fa-link"></i> URL del Producto</label>
-                    <input type="text" id="productUrl" placeholder="Pega la URL del producto...">
+                    <input type="url" id="productUrl" placeholder="Introduce la URL del producto">
+                    <button class="add-product-btn">
+                        <i class="fas fa-plus"></i> Añadir Producto
+                    </button>
                 </div>
 
                 <div class="input-group context-group">
-                    <label><i class="fas fa-comment"></i> ¿Cuál es tu necesidad?</label>
-                    <textarea id="userContext" placeholder="Describe tu uso específico, preferencias o requisitos..."></textarea>
+                    <textarea id="userContext" placeholder="Describe tu necesidad o caso de uso específico"></textarea>
                 </div>
-
-                <button type="button" class="add-product-btn">
-                    <i class="fas fa-plus"></i>
-                    Añadir Producto
-                </button>
-            </form>
+            </div>
 
             <div class="products-list"></div>
 
             <button class="compare-btn" disabled>
-                <i class="fas fa-search"></i>
-                Comparar Productos
+                <i class="fas fa-balance-scale"></i> Comparar Productos
             </button>
 
             <div class="comparison-result"></div>
         </div>
-
-        <!-- Advisor Tab -->
-        <div class="tab-content" id="advisor">
-            <header class="app-header">
+        <!-- Pestaña del Recomendador -->
+        <div id="advisor" class="tab-content">
+            <div class="app-header">
                 <h1>Recomendador Inteligente</h1>
                 <p>Encuentra el producto perfecto para ti</p>
-            </header>
+            </div>
 
-            <form class="advisor-form">
-                <div class="input-group">
-                    <label><i class="fas fa-tags"></i> ¿Qué tipo de producto necesitas?</label>
-                    <select id="productType" required>
-                        <option value="">Selecciona una categoría</option>
-                        <option value="laptop">Portátil</option>
-                        <option value="desktop">PC Sobremesa</option>
-                        <option value="monitor">Monitor</option>
-                        <option value="phone">Smartphone</option>
-                        <option value="tablet">Tablet</option>
-                        <option value="tv">Televisor</option>
-                        <option value="console">Consola</option>
-                    </select>
+            <form id="advisor-form" class="advisor-form">
+                <div class="form-group">
+                    <label for="product-type">
+                        <i class="fas fa-tag"></i> ¿Qué tipo de producto necesitas?
+                    </label>
+                    <input type="text" 
+                           id="product-type" 
+                           name="product-type" 
+                           placeholder="Ej: Monitor, Portátil, TV, Smartphone..." 
+                           required>
                 </div>
 
-                <div class="input-group">
-                    <label><i class="fas fa-euro-sign"></i> Presupuesto</label>
+                <div class="form-group">
+                    <label>
+                        <i class="fas fa-euro-sign"></i> Presupuesto
+                    </label>
                     <div class="budget-inputs">
-                        <input type="number" id="minBudget" placeholder="Mínimo €" min="0">
-                        <input type="number" id="maxBudget" placeholder="Máximo €" required>
+                        <input type="number" 
+                               id="min-budget" 
+                               name="min-budget" 
+                               placeholder="Mínimo" 
+                               required>
+                        <input type="number" 
+                               id="max-budget" 
+                               name="max-budget" 
+                               placeholder="Máximo" 
+                               required>
                     </div>
                 </div>
 
-                <div class="input-group">
-                    <label><i class="fas fa-tasks"></i> ¿Cuál será el uso principal?</label>
-                    <select id="mainUse" required>
-                        <option value="">Selecciona el uso principal</option>
-                        <option value="work">Trabajo</option>
-                        <option value="gaming">Gaming</option>
-                        <option value="student">Estudios</option>
-                        <option value="multimedia">Multimedia</option>
-                        <option value="basic">Uso básico</option>
-                    </select>
+                <div class="form-group">
+                    <label for="main-use">
+                        <i class="fas fa-tasks"></i> ¿Cuál será el uso principal?
+                    </label>
+                    <input type="text" 
+                           id="main-use" 
+                           name="main-use" 
+                           placeholder="Ej: Trabajo, Gaming, Estudio, Multimedia..." 
+                           required>
                 </div>
 
-                <div class="input-group">
-                    <label><i class="fas fa-comment-alt"></i> Describe tus necesidades específicas</label>
-                    <textarea id="userNeeds" required rows="4" 
-                        placeholder="Ej: Necesito un portátil para programar, que sea ligero para llevarlo a la universidad y que pueda ejecutar máquinas virtuales..."></textarea>
+                <div class="form-group">
+                    <label for="specific-needs">
+                        <i class="fas fa-list-ul"></i> Describe tus necesidades específicas
+                    </label>
+                    <textarea id="specific-needs" 
+                              name="specific-needs" 
+                              placeholder="Ej: Necesito que sea ligero, con buena batería, pantalla de alta resolución..."
+                              rows="4"></textarea>
                 </div>
 
-                <button type="submit" class="submit-btn">
-                    <i class="fas fa-magic"></i>
-                    Encontrar Recomendaciones
+                <button type="submit" class="find-recommendations-btn">
+                    <i class="fas fa-search"></i> Encontrar Recomendaciones
                 </button>
             </form>
 
-            <div class="advisor-result"></div>
+            <div id="advisor-result" class="advisor-result"></div>
         </div>
+        <!-- Pestaña del Historial -->
+        <div id="history" class="tab-content">
+            <div class="app-header">
+                <h1>Historial de Búsquedas</h1>
+                <p>Tus comparaciones y recomendaciones anteriores</p>
+            </div>
 
-        <!-- History Tab -->
-        <div class="tab-content" id="history">
             <div class="history-controls">
                 <div class="history-filters">
                     <button class="filter-btn active" data-filter="all">
-                        <i class="fas fa-list"></i>
-                        Todo
+                        <i class="fas fa-list"></i> Todo
                     </button>
                     <button class="filter-btn" data-filter="comparison">
-                        <i class="fas fa-balance-scale"></i>
-                        Comparaciones
+                        <i class="fas fa-exchange-alt"></i> Comparaciones
                     </button>
                     <button class="filter-btn" data-filter="recommendation">
-                        <i class="fas fa-magic"></i>
-                        Recomendaciones
+                        <i class="fas fa-magic"></i> Recomendaciones
                     </button>
                 </div>
+                
                 <button class="clear-history-btn">
-                    <i class="fas fa-trash"></i>
-                    Limpiar historial
+                    <i class="fas fa-trash"></i> Limpiar historial
                 </button>
             </div>
+
             <div class="history-list">
-                <!-- Se llenará dinámicamente -->
+                <!-- El historial se llenará dinámicamente con JavaScript -->
             </div>
         </div>
     </div>
+
+    <!-- Templates para el historial -->
+    <template id="history-item-template">
+        <div class="history-item">
+            <div class="history-item-header">
+                <span class="history-date"></span>
+                <span class="history-type"></span>
+            </div>
+            <div class="history-content"></div>
+            <div class="history-actions">
+                <button class="view-details-btn">
+                    <i class="fas fa-eye"></i> Ver detalles
+                </button>
+                <button class="delete-item-btn">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    </template>
+
     <script src="app.js"></script>
 </body>
 </html>
