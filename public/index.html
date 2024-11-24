@@ -11,13 +11,13 @@
     <div class="container">
         <!-- Navegación por pestañas -->
         <div class="tabs">
-            <button class="tab-btn active" data-tab="comparator">
+            <button class="tab-button active" data-tab="comparator">
                 <i class="fas fa-exchange-alt"></i> Comparador
             </button>
-            <button class="tab-btn" data-tab="advisor">
+            <button class="tab-button" data-tab="advisor">
                 <i class="fas fa-magic"></i> Recomendador
             </button>
-            <button class="tab-btn" data-tab="history">
+            <button class="tab-button" data-tab="history">
                 <i class="fas fa-history"></i> Historial
             </button>
         </div>
@@ -45,15 +45,28 @@
             </div>
 
             <div class="comparison-form">
-                <div class="input-group">
-                    <input type="url" id="productUrl" placeholder="Introduce la URL del producto">
-                    <button class="add-product-btn">
-                        <i class="fas fa-plus"></i> Añadir Producto
-                    </button>
+                <div class="form-group">
+                    <label for="productUrl">
+                        <i class="fas fa-link"></i> URL del Producto
+                    </label>
+                    <div class="input-group">
+                        <input type="url" 
+                               id="productUrl" 
+                               class="form-input"
+                               placeholder="Introduce la URL del producto">
+                        <button class="add-product-btn">
+                            <i class="fas fa-plus"></i> Añadir Producto
+                        </button>
+                    </div>
                 </div>
 
-                <div class="input-group context-group">
-                    <textarea id="userContext" placeholder="Describe tu necesidad o caso de uso específico"></textarea>
+                <div class="form-group context-group">
+                    <label for="userContext">
+                        <i class="fas fa-comment-dots"></i> ¿Cuál es tu necesidad?
+                    </label>
+                    <textarea id="userContext" 
+                              class="form-input"
+                              placeholder="Describe tu caso de uso específico..."></textarea>
                 </div>
             </div>
 
@@ -79,8 +92,8 @@
                     </label>
                     <input type="text" 
                            id="product-type" 
-                           name="product-type" 
-                           placeholder="Ej: Monitor, Portátil, TV, Smartphone..." 
+                           class="form-input"
+                           placeholder="Ej: Portátil, Monitor, TV..." 
                            required>
                 </div>
 
@@ -91,12 +104,12 @@
                     <div class="budget-inputs">
                         <input type="number" 
                                id="min-budget" 
-                               name="min-budget" 
+                               class="form-input"
                                placeholder="Mínimo" 
                                required>
                         <input type="number" 
                                id="max-budget" 
-                               name="max-budget" 
+                               class="form-input"
                                placeholder="Máximo" 
                                required>
                     </div>
@@ -108,8 +121,8 @@
                     </label>
                     <input type="text" 
                            id="main-use" 
-                           name="main-use" 
-                           placeholder="Ej: Trabajo, Gaming, Estudio, Multimedia..." 
+                           class="form-input"
+                           placeholder="Ej: Gaming, Trabajo, Estudio..." 
                            required>
                 </div>
 
@@ -118,8 +131,8 @@
                         <i class="fas fa-list-ul"></i> Describe tus necesidades específicas
                     </label>
                     <textarea id="specific-needs" 
-                              name="specific-needs" 
-                              placeholder="Ej: Necesito que sea ligero, con buena batería, pantalla de alta resolución..."
+                              class="form-input"
+                              placeholder="Ej: Necesito que sea ligero, con buena batería..."
                               rows="4"></textarea>
                 </div>
 
@@ -130,6 +143,7 @@
 
             <div id="advisor-result" class="advisor-result"></div>
         </div>
+
         <!-- Pestaña del Historial -->
         <div id="history" class="tab-content">
             <div class="app-header">
@@ -161,7 +175,7 @@
         </div>
     </div>
 
-    <!-- Templates para el historial -->
+    <!-- Template para los elementos del historial -->
     <template id="history-item-template">
         <div class="history-item">
             <div class="history-item-header">
@@ -180,6 +194,7 @@
         </div>
     </template>
 
+    <!-- Scripts -->
     <script src="app.js"></script>
 </body>
 </html>

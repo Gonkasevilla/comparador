@@ -1,18 +1,57 @@
-/* Ajustes en las pestañas */
+:root {
+    --primary-color: #4C6FFF;
+    --primary-light: #E8EDFF;
+    --primary-dark: #3B5BDB;
+    --success-color: #22C55E;
+    --error-color: #EF4444;
+    --text-color: #2D3958;
+    --text-light: #64748B;
+    --background: #F7F9FC;
+    --white: #FFFFFF;
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    --border-color: #E2E8F0;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+body {
+    background-color: var(--background);
+    color: var(--text-color);
+    line-height: 1.6;
+    padding: 2rem;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Navegación por pestañas */
 .tabs {
-    background: white;
-    border-radius: 0.75rem;
-    padding: 0.75rem;
+    background: var(--white);
+    border-radius: 12px;
+    padding: 1rem;
     box-shadow: var(--shadow-sm);
     position: sticky;
     top: 1rem;
     z-index: 100;
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
 }
 
-.tab-btn {
-    padding: 0.75rem 1.5rem;
+.tab-button {
+    flex: 1;
+    padding: 1rem 1.5rem;
     border: none;
-    border-radius: 0.5rem;
+    border-radius: 8px;
     background: none;
     color: var(--text-light);
     font-size: 1rem;
@@ -21,161 +60,285 @@
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    justify-content: center;
+    gap: 0.75rem;
 }
 
-.tab-btn:hover {
+.tab-button:hover {
     color: var(--primary-color);
     background-color: var(--primary-light);
 }
 
-.tab-btn.active {
-    color: white;
+.tab-button.active {
+    color: var(--white);
     background-color: var(--primary-color);
 }
 
-/* Estilos mejorados para el formulario del recomendador */
-.advisor-form {
+/* Contenido de pestañas */
+.tab-content {
+    display: none;
+    animation: slideIn 0.3s ease-out;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Encabezado */
+.app-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.app-header h1 {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.app-header p {
+    color: var(--text-light);
+    font-size: 1.1rem;
+}
+
+/* Características */
+.features {
     display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.feature {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--primary-color);
+    font-weight: 500;
+    padding: 1rem;
+    background: var(--white);
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+}
+
+.feature:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Formularios */
+.comparison-form,
+.advisor-form {
+    background: var(--white);
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 2rem;
 }
 
 .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    margin-bottom: 1.5rem;
 }
 
 .form-group label {
-    font-weight: 600;
-    color: var(--text-color);
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+    font-weight: 600;
 }
 
 .form-group label i {
     color: var(--primary-color);
 }
 
-.form-group input,
-.form-group textarea {
+.form-input,
+input[type="text"],
+input[type="number"],
+input[type="url"],
+textarea {
+    width: 100%;
     padding: 1rem;
-    border: 2px solid #E2E8F0;
-    border-radius: 0.5rem;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
     font-size: 1rem;
+    background: var(--white);
+    color: var(--text-color);
     transition: all 0.3s ease;
 }
 
-.form-group input:focus,
-.form-group textarea:focus {
+.form-input:focus,
+input:focus,
+textarea:focus {
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px var(--primary-light);
     outline: none;
 }
-/* Resultado del Recomendador */
-.advisor-result {
-    background: white;
-    border-radius: 1rem;
-    box-shadow: var(--shadow-md);
-    margin-top: 2rem;
-    overflow: hidden;
-    animation: slideUp 0.5s ease-out;
-}
 
-.recommendation-header {
-    background: var(--primary-light);
+/* Grupo de contexto */
+.context-group {
+    background-color: var(--primary-light);
+    border-radius: 12px;
     padding: 1.5rem;
-    border-bottom: 2px solid var(--primary-color);
+    margin-top: 2rem;
 }
 
-.recommendation-header h3 {
-    color: var(--primary-color);
-    font-size: 1.25rem;
-    margin-bottom: 0.5rem;
+textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+/* Entradas de presupuesto */
+.budget-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+/* Botones */
+.add-product-btn,
+.compare-btn,
+.find-recommendations-btn {
+    width: 100%;
+    padding: 1rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.75rem;
-}
-
-.recommendation-content {
-    padding: 1.5rem;
-}
-
-.recommended-product {
-    background: var(--background);
-    border-radius: 0.75rem;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
     transition: all 0.3s ease;
 }
 
-.recommended-product:hover {
+.add-product-btn,
+.find-recommendations-btn {
+    background-color: var(--primary-color);
+    color: var(--white);
+}
+
+.add-product-btn:hover,
+.find-recommendations-btn:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.compare-btn {
+    background-color: var(--border-color);
+    color: var(--text-light);
+    cursor: not-allowed;
+    margin-top: 1rem;
+}
+
+.compare-btn.active {
+    background-color: var(--success-color);
+    color: var(--white);
+    cursor: pointer;
+}
+
+.compare-btn.active:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Lista de productos */
+.products-list {
+    display: grid;
+    gap: 1rem;
+    margin: 2rem 0;
+}
+
+.product-card {
+    background-color: var(--white);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    transition: all 0.3s ease;
+}
+
+.product-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
 }
 
-.product-header {
+/* Estado de carga */
+.loading {
+    text-align: center;
+    padding: 2rem;
+    background-color: var(--white);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-md);
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid var(--primary-light);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    margin: 0 auto 1rem;
+    animation: spin 1s linear infinite;
+}
+
+/* Resultado del análisis */
+.comparison-content,
+.advisor-result {
+    background: var(--white);
+    padding: 2.5rem;
+    border-radius: 1rem;
+    box-shadow: var(--shadow-md);
+    margin-top: 2rem;
+    animation: slideUp 0.5s ease-out;
+}
+
+/* Historial */
+.history-controls {
     display: flex;
-    align-items: flex-start;
-    gap: 1.5rem;
-    margin-bottom: 1rem;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    gap: 1rem;
 }
 
-.product-image {
-    width: 120px;
-    height: 120px;
-    object-fit: contain;
-    background: white;
-    border-radius: 0.5rem;
-    padding: 0.5rem;
+.history-filters {
+    display: flex;
+    gap: 0.5rem;
 }
 
-.product-details {
-    flex: 1;
-}
-
-.product-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--text-color);
-    margin-bottom: 0.5rem;
-}
-
-.product-price {
-    color: var(--primary-color);
-    font-weight: 600;
-    font-size: 1.25rem;
-    margin-bottom: 0.5rem;
-}
-
-.product-features {
-    margin: 1rem 0;
-}
-
-.feature-list {
-    list-style: none;
-    padding: 0;
-}
-
-.feature-list li {
+.filter-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    margin-bottom: 0.5rem;
+    background: var(--primary-light);
+    color: var(--primary-color);
+    transition: all 0.3s ease;
 }
 
-.feature-list li i {
-    color: var(--success-color);
+.filter-btn.active {
+    background: var(--primary-color);
+    color: var(--white);
 }
 
-/* Mensajes de carga mejorados */
-.loading-messages {
-    margin-top: 1rem;
-    font-style: italic;
-    color: var(--text-light);
-    animation: fadeInOut 2s infinite;
+/* Animaciones */
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 @keyframes fadeInOut {
@@ -184,168 +347,65 @@
     100% { opacity: 0.4; }
 }
 
-/* Animación para transiciones entre pestañas */
 @keyframes slideIn {
     from {
         opacity: 0;
-        transform: translateX(-20px);
+        transform: translateY(20px);
     }
     to {
         opacity: 1;
-        transform: translateX(0);
+        transform: translateY(0);
     }
 }
 
-.tab-content {
-    animation: slideIn 0.3s ease-out;
-}
-/* Historial Mejorado */
-.history-container {
-    padding: 1rem;
-}
-
-.history-item {
-    background: white;
-    border-radius: 1rem;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-    box-shadow: var(--shadow-sm);
-    transition: all 0.3s ease;
-}
-
-.history-item:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-}
-
-.history-item-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--primary-light);
-}
-
-.history-item-type {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: var(--primary-light);
-    color: var(--primary-color);
-    border-radius: 2rem;
-    font-size: 0.9rem;
-    font-weight: 500;
-}
-
-.history-date {
-    color: var(--text-light);
-    font-size: 0.9rem;
-}
-
-.history-content {
-    margin: 1rem 0;
-}
-
-.history-actions {
-    display: flex;
-    gap: 1rem;
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--primary-light);
-}
-
-.view-details-btn, 
-.delete-item-btn {
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 0.5rem;
-    font-size: 0.9rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: all 0.3s ease;
-}
-
-.view-details-btn {
-    background: var(--primary-light);
-    color: var(--primary-color);
-}
-
-.view-details-btn:hover {
-    background: var(--primary-color);
-    color: white;
-}
-
-.delete-item-btn {
-    background: #FEE2E2;
-    color: var(--error-color);
-}
-
-.delete-item-btn:hover {
-    background: var(--error-color);
-    color: white;
-}
-
-/* Mejoras Responsive */
+/* Responsive */
 @media (max-width: 768px) {
-    .container {
-        padding: 0.5rem;
-    }
-    
-    .history-item-header {
-        flex-direction: column;
-        gap: 0.5rem;
-        align-items: flex-start;
-    }
-    
-    .history-actions {
-        flex-direction: column;
-    }
-    
-    .product-header {
-        flex-direction: column;
-    }
-    
-    .product-image {
-        width: 100%;
-        height: auto;
+    body {
+        padding: 1rem;
     }
     
     .tabs {
+        flex-direction: column;
         position: static;
-        margin-bottom: 1rem;
     }
     
-    .form-group label {
-        font-size: 0.9rem;
+    .features {
+        flex-direction: column;
     }
     
     .budget-inputs {
+        grid-template-columns: 1fr;
+    }
+    
+    .comparison-form,
+    .advisor-form {
+        padding: 1.5rem;
+    }
+    
+    .history-controls {
         flex-direction: column;
     }
 }
 
-/* Temas oscuro/claro y alto contraste */
+/* Modo oscuro */
 @media (prefers-color-scheme: dark) {
     :root {
         --background: #1a1a1a;
         --text-color: #ffffff;
         --text-light: #a0aec0;
-        --primary-light: rgba(76, 111, 255, 0.2);
+        --white: #2d2d2d;
+        --border-color: #404040;
     }
     
+    .feature,
     .comparison-content,
     .advisor-result,
     .history-item {
-        background: #2d2d2d;
+        background: var(--white);
     }
     
     input, select, textarea {
-        background: #2d2d2d;
-        border-color: #404040;
-        color: white;
+        background: var(--white);
+        color: var(--text-color);
     }
 }

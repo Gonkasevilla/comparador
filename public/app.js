@@ -1,313 +1,191 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Elements
-    const tabButtons = document.querySelectorAll('.tab-button');
-    const tabContents = document.querySelectorAll('.tab-content');
-    const productUrlInput = document.getElementById('productUrl');
-    const userContextInput = document.getElementById('userContext');
-    const addProductBtn = document.querySelector('.add-product-btn');
-    const productsList = document.querySelector('.products-list');
-    const compareBtn = document.querySelector('.compare-btn');
-    const comparisonResult = document.querySelector('.comparison-result');
-    const advisorForm = document.querySelector('.advisor-form');
-    const advisorResult = document.querySelector('.advisor-result');
-    const historyFilters = document.querySelectorAll('.filter-btn');
-    const clearHistoryBtn = document.querySelector('.clear-history-btn');
-    const historyList = document.querySelector('.history-list');
-
-    const products = [];
-    
-    // Loading Messages
-    const loadingMessages = {
-        comparison: [
-            "🛍️ Visitando las tiendas por ti...",
-            "📦 Haciendo unboxing para que tú no tengas que hacerlo...",
-            "🤔 Consultando con expertos...",
-            "🔍 Analizando cada detalle...",
-            "📊 Comparando características...",
-            "💡 Pensando en tus necesidades..."
-        ],
-        advisor: [
-            "🔍 Buscando los mejores productos para ti...",
-            "📊 Analizando tus necesidades...",
-            "💡 Encontrando las mejores opciones...",
-            "🎯 Ajustando recomendaciones a tu presupuesto...",
-            "⭐ Seleccionando productos de calidad...",
-            "📱 Verificando disponibilidad..."
-        ]
+    // Estado inicial de la aplicación
+    const state = {
+        products: [],
+        currentTab: 'comparator',
+        history: JSON.parse(localStorage.getItem('searchHistory')) || []
     };
 
-    // History Management
-    const saveToHistory = (type, data) => {
-        const history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
-        const newEntry = {
-            id: Date.now(),
-            type,
-            date: new Date().toISOString(),
-            data
-        };
-        history.unshift(newEntry);
-        localStorage.setItem('searchHistory', JSON.stringify(history.slice(0, 10)));
-        updateHistoryView();
+    // Referencias a elementos del DOM
+    const elements = {
+        tabs: document.querySelectorAll('.tab-button'),
+        tabContents: document.querySelectorAll('.tab-content'),
+        productForm: {
+            input: document.getElementById('productUrl'),
+            addButton: document.querySelector('.add-product-btn'),
+            compareButton: document.querySelector('.compare-btn'),
+            contextInput: document.getElementById('userContext'),
+            productsList: document.querySelector('.products-list'),
+            resultArea: document.querySelector('.comparison-result')
+        },
+        advisorForm: {
+            form: document.getElementById('advisor-form'),
+            resultArea: document.getElementById('advisor-result')
+        },
+        history: {
+            list: document.querySelector('.history-list'),
+            filters: document.querySelectorAll('.filter-btn'),
+            clearButton: document.querySelector('.clear-history-btn')
+        }
     };
 
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('es-ES', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+    // Navegación por pestañas
+    elements.tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabId = tab.getAttribute('data-tab');
+            switchTab(tabId);
         });
-    };
+    });
 
-    const getRandomLoadingMessage = (type) => {
-        const messages = loadingMessages[type];
-        return messages[Math.floor(Math.random() * messages.length)];
-    };
+    function switchTab(tabId) {
+        // Actualizar estado
+        state.currentTab = tabId;
 
-    // UI Updates
-    const updateCompareButton = () => {
-        const isActive = products.length >= 2;
-        compareBtn.classList.toggle('active', isActive);
-        compareBtn.disabled = !isActive;
-    };
-    // Product Card Creation
-    const createProductCard = (url, index) => {
-        const card = document.createElement('div');
-        card.className = 'product-card animate__animated animate__fadeIn';
-        
-        const urlObj = new URL(url);
-        const productName = urlObj.pathname
-            .split('/')
-            .pop()
-            .replace(/-/g, ' ')
-            .replace(/\.html$/, '')
-            .split(' ')
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(' ');
-
-        card.innerHTML = `
-            <div class="product-info">
-                <p class="product-name">${productName}</p>
-                <small class="product-url">${urlObj.hostname}</small>
-            </div>
-            <button class="delete-product" data-index="${index}">
-                <i class="fas fa-times"></i>
-            </button>
-        `;
-        return card;
-    };
-
-    const updateProductsList = () => {
-        productsList.innerHTML = '';
-        products.forEach((url, index) => {
-            productsList.appendChild(createProductCard(url, index));
+        // Actualizar clases activas
+        elements.tabs.forEach(tab => {
+            tab.classList.toggle('active', tab.getAttribute('data-tab') === tabId);
         });
-        updateCompareButton();
-    };
 
-    const showLoadingMessage = (element, type) => {
-        element.innerHTML = `
+        elements.tabContents.forEach(content => {
+            content.classList.toggle('active', content.id === tabId);
+        });
+
+        // Cargar contenido específico de la pestaña si es necesario
+        if (tabId === 'history') {
+            renderHistory();
+        }
+    }
+
+    // Mensajes de carga aleatorios
+    const loadingMessages = [
+        "Analizando productos con IA... 🤖",
+        "Comparando características... 📊",
+        "Evaluando precios... 💰",
+        "Buscando las mejores opciones... 🔍",
+        "Consultando bases de datos... 📚",
+        "Procesando información... ⚡",
+        "Preparando recomendaciones... 🎯"
+    ];
+
+    function getRandomLoadingMessage() {
+        return loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
+    }
+
+    function showLoading(container) {
+        container.innerHTML = `
             <div class="loading">
                 <div class="spinner"></div>
-                <p class="loading-message">${getRandomLoadingMessage(type)}</p>
+                <div class="loading-message">${getRandomLoadingMessage()}</div>
             </div>
         `;
-    };
-
-    const updateHistoryView = (filter = 'all') => {
-        const history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
-        const filteredHistory = filter === 'all' ? 
-            history : 
-            history.filter(item => item.type === filter);
-
-        if (filteredHistory.length === 0) {
-            historyList.innerHTML = `
-                <div class="empty-history">
-                    <i class="fas fa-history fa-3x"></i>
-                    <p>No hay búsquedas en el historial</p>
-                </div>
-            `;
-            return;
-        }
-
-        historyList.innerHTML = filteredHistory.map(item => `
-            <div class="history-item" data-id="${item.id}">
-                <div class="history-item-header">
-                    <div class="history-item-type">
-                        <i class="fas fa-${item.type === 'comparison' ? 'balance-scale' : 'magic'}"></i>
-                        ${item.type === 'comparison' ? 'Comparación' : 'Recomendación'}
-                    </div>
-                    <span class="history-item-date">${formatDate(item.date)}</span>
-                </div>
-                <div class="history-item-content">
-                    ${formatHistoryContent(item)}
-                </div>
-            </div>
-        `).join('');
-    };
-
-    const formatHistoryContent = (item) => {
-        if (item.type === 'comparison') {
-            return `
-                <div class="compared-products">
-                    <strong>Productos comparados:</strong>
-                    <ul>
-                        ${item.data.products.map(p => `<li>${p}</li>`).join('')}
-                    </ul>
-                </div>
-            `;
+    }
+    // Manejo de productos
+    elements.productForm.addButton.addEventListener('click', () => {
+        const url = elements.productForm.input.value.trim();
+        if (validateUrl(url)) {
+            addProduct(url);
+            elements.productForm.input.value = '';
         } else {
-            return `
-                <div class="recommendation-summary">
-                    <strong>Búsqueda:</strong>
-                    <p>${item.data.userNeeds}</p>
-                    <strong>Presupuesto:</strong>
-                    <p>Hasta ${item.data.maxBudget}€</p>
-                </div>
-            `;
+            showNotification('Por favor, introduce una URL válida', 'error');
         }
-    };
-    // Event Listeners
-    tabButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            tabButtons.forEach(btn => btn.classList.remove('active'));
-            tabContents.forEach(content => content.classList.remove('active'));
-            
-            button.classList.add('active');
-            const tabId = button.dataset.tab;
-            document.getElementById(tabId).classList.add('active');
-        });
     });
 
-    addProductBtn.addEventListener('click', () => {
-        const url = productUrlInput.value.trim();
-        if (!url) {
-            alert('Por favor, introduce una URL de producto');
-            return;
+    elements.productForm.input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            elements.productForm.addButton.click();
         }
+    });
+
+    function validateUrl(url) {
         try {
             new URL(url);
-            products.push(url);
-            productUrlInput.value = '';
-            updateProductsList();
-        } catch (e) {
-            alert('Por favor, introduce una URL válida');
+            return url.includes('http') && (
+                url.includes('pccomponentes.com') ||
+                url.includes('mediamarkt.es') ||
+                url.includes('amazon.es') ||
+                url.includes('carrefour.es') ||
+                url.includes('elcorteingles.es') ||
+                url.includes('fnac.es')
+            );
+        } catch {
+            return false;
         }
-    });
+    }
 
-    productUrlInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            addProductBtn.click();
-        }
-    });
-
-    productsList.addEventListener('click', (e) => {
-        if (e.target.closest('.delete-product')) {
-            const index = e.target.closest('.delete-product').dataset.index;
-            products.splice(index, 1);
-            updateProductsList();
-        }
-    });
-
-    compareBtn.addEventListener('click', async () => {
-        if (products.length < 2) return;
-        
-        showLoadingMessage(comparisonResult, 'comparison');
-        let currentMessageIndex = 0;
-        
-        const messageInterval = setInterval(() => {
-            const loadingMessage = document.querySelector('.loading-message');
-            if (loadingMessage) {
-                currentMessageIndex = (currentMessageIndex + 1) % loadingMessages.comparison.length;
-                loadingMessage.textContent = loadingMessages.comparison[currentMessageIndex];
-            }
-        }, 3000);
-
-        try {
-            const response = await fetch('/api/compare', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    urls: products,
-                    userContext: userContextInput.value.trim()
-                })
-            });
-            
-            clearInterval(messageInterval);
-            const data = await response.json();
-
-            if (data.error) {
-                throw new Error(data.error);
-            }
-
-            const formattedAnalysis = data.analysis
-                .replace(/### (.*?)$/gm, (match, title) => {
-                    const titleWithEmoji = title.includes('💡') ? title : title;
-                    return `<h3>${titleWithEmoji}</h3>`;
-                })
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/•\s/g, '')
-                .split('\n').filter(line => line.trim()).join('\n');
-
-            comparisonResult.innerHTML = `
-                <div class="comparison-content animate__animated animate__fadeIn">
-                    ${formattedAnalysis}
-                </div>
-            `;
-
-            // Save to history
-            saveToHistory('comparison', {
-                products: products.map(url => {
-                    const urlObj = new URL(url);
-                    return urlObj.pathname.split('/').pop().replace(/-/g, ' ');
-                }),
-                result: data.analysis
-            });
-
-            comparisonResult.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'start'
-            });
-
-        } catch (error) {
-            clearInterval(messageInterval);
-            comparisonResult.innerHTML = `
-                <div class="error animate__animated animate__fadeIn">
-                    <h3>Ha ocurrido un error</h3>
-                    <p>${error.message || 'Error al realizar la comparación'}</p>
-                </div>
-            `;
-        }
-    });
-    // Advisor Form Handler
-    advisorForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const productType = document.getElementById('productType').value;
-        const minBudget = document.getElementById('minBudget').value;
-        const maxBudget = document.getElementById('maxBudget').value;
-        const mainUse = document.getElementById('mainUse').value;
-        const userNeeds = document.getElementById('userNeeds').value;
-
-        if (!productType || !maxBudget || !mainUse || !userNeeds) {
-            alert('Por favor, completa todos los campos requeridos');
+    function addProduct(url) {
+        if (state.products.includes(url)) {
+            showNotification('Este producto ya está en la lista', 'error');
             return;
         }
 
-        showLoadingMessage(advisorResult, 'advisor');
-        let currentMessageIndex = 0;
+        state.products.push(url);
+        renderProducts();
+        updateCompareButton();
+    }
+
+    function renderProducts() {
+        elements.productForm.productsList.innerHTML = state.products.map((url, index) => `
+            <div class="product-card">
+                <div class="product-info">
+                    <p class="product-name">${getProductNameFromUrl(url)}</p>
+                    <small class="product-url">${new URL(url).hostname}</small>
+                </div>
+                <button class="delete-product" data-index="${index}">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `).join('');
+
+        // Agregar event listeners para eliminar productos
+        document.querySelectorAll('.delete-product').forEach(button => {
+            button.addEventListener('click', () => {
+                const index = parseInt(button.dataset.index);
+                deleteProduct(index);
+            });
+        });
+    }
+
+    function getProductNameFromUrl(url) {
+        try {
+            const pathname = new URL(url).pathname;
+            return pathname
+                .split('/')
+                .pop()
+                .replace(/-/g, ' ')
+                .replace('.html', '')
+                .split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+        } catch {
+            return 'Producto';
+        }
+    }
+
+    function deleteProduct(index) {
+        state.products.splice(index, 1);
+        renderProducts();
+        updateCompareButton();
+    }
+
+    function updateCompareButton() {
+        const canCompare = state.products.length >= 2;
+        elements.productForm.compareButton.disabled = !canCompare;
+        elements.productForm.compareButton.classList.toggle('active', canCompare);
+    }
+
+    // Manejo del recomendador
+    elements.advisorForm.form.addEventListener('submit', async (e) => {
+        e.preventDefault();
         
-        const messageInterval = setInterval(() => {
-            const loadingMessage = document.querySelector('.loading-message');
-            if (loadingMessage) {
-                currentMessageIndex = (currentMessageIndex + 1) % loadingMessages.advisor.length;
-                loadingMessage.textContent = loadingMessages.advisor[currentMessageIndex];
-            }
-        }, 3000);
+        const formData = {
+            productType: document.getElementById('product-type').value,
+            minBudget: document.getElementById('min-budget').value,
+            maxBudget: document.getElementById('max-budget').value,
+            mainUse: document.getElementById('main-use').value,
+            specificNeeds: document.getElementById('specific-needs').value
+        };
+
+        showLoading(elements.advisorForm.resultArea);
 
         try {
             const response = await fetch('/api/recommend', {
@@ -315,105 +193,158 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    productType,
-                    minBudget,
-                    maxBudget,
-                    mainUse,
-                    userNeeds
-                })
+                body: JSON.stringify(formData)
             });
 
-            clearInterval(messageInterval);
             const data = await response.json();
 
             if (data.error) {
                 throw new Error(data.error);
             }
 
-            // Format recommendations similarly to comparisons
-            const formattedRecommendations = data.recommendations
-                .replace(/### (.*?)$/gm, (match, title) => `<h3>${title}</h3>`)
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/•\s/g, '')
-                .split('\n')
-                .filter(line => line.trim())
-                .join('\n');
-
-            advisorResult.innerHTML = `
-                <div class="recommendations-content animate__animated animate__fadeIn">
-                    ${formattedRecommendations}
-                </div>
-            `;
-
-            // Save to history
-            saveToHistory('recommendation', {
-                productType,
-                maxBudget,
-                mainUse,
-                userNeeds,
-                result: data.recommendations
-            });
-
-            advisorResult.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'start' 
-            });
+            renderRecommendation(data);
+            saveToHistory('recommendation', formData, data);
 
         } catch (error) {
-            clearInterval(messageInterval);
-            advisorResult.innerHTML = `
-                <div class="error animate__animated animate__fadeIn">
-                    <h3>Ha ocurrido un error</h3>
-                    <p>${error.message || 'Error al obtener recomendaciones'}</p>
+            showError(elements.advisorForm.resultArea, error.message);
+        }
+    });
+    // Manejo del historial
+    function saveToHistory(type, request, response) {
+        const historyItem = {
+            id: Date.now(),
+            type: type,
+            date: new Date().toISOString(),
+            request: request,
+            response: response
+        };
+
+        state.history.unshift(historyItem);
+        if (state.history.length > 10) {
+            state.history.pop();
+        }
+
+        localStorage.setItem('searchHistory', JSON.stringify(state.history));
+        if (state.currentTab === 'history') {
+            renderHistory();
+        }
+    }
+
+    function renderHistory(filter = 'all') {
+        const filteredHistory = state.history.filter(item => 
+            filter === 'all' || item.type === filter
+        );
+
+        elements.history.list.innerHTML = filteredHistory.length ? 
+            filteredHistory.map(item => createHistoryItemHTML(item)).join('') :
+            `<div class="empty-history">No hay elementos en el historial</div>`;
+
+        // Agregar event listeners para las acciones del historial
+        addHistoryEventListeners();
+    }
+
+    function createHistoryItemHTML(item) {
+        const date = new Date(item.date).toLocaleString();
+        const typeIcon = item.type === 'comparison' ? 'exchange-alt' : 'magic';
+        const typeText = item.type === 'comparison' ? 'Comparación' : 'Recomendación';
+
+        return `
+            <div class="history-item" data-id="${item.id}">
+                <div class="history-item-header">
+                    <span class="history-date">
+                        <i class="fas fa-calendar"></i> ${date}
+                    </span>
+                    <span class="history-type">
+                        <i class="fas fa-${typeIcon}"></i> ${typeText}
+                    </span>
                 </div>
-            `;
-        }
-    });
+                <div class="history-content">
+                    ${getHistoryItemSummary(item)}
+                </div>
+                <div class="history-actions">
+                    <button class="view-details-btn">
+                        <i class="fas fa-eye"></i> Ver detalles
+                    </button>
+                    <button class="delete-item-btn">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }
 
-    // History Event Listeners
-    historyFilters.forEach(btn => {
-        btn.addEventListener('click', () => {
-            historyFilters.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            updateHistoryView(btn.dataset.filter);
+    function getHistoryItemSummary(item) {
+        if (item.type === 'comparison') {
+            return `Comparación de ${item.request.products.length} productos`;
+        } else {
+            return `Búsqueda de ${item.request.productType} - Presupuesto: ${item.request.minBudget}€ - ${item.request.maxBudget}€`;
+        }
+    }
+
+    function addHistoryEventListeners() {
+        // Filtros del historial
+        elements.history.filters.forEach(filter => {
+            filter.addEventListener('click', () => {
+                elements.history.filters.forEach(f => f.classList.remove('active'));
+                filter.classList.add('active');
+                renderHistory(filter.dataset.filter);
+            });
         });
-    });
 
-    clearHistoryBtn.addEventListener('click', () => {
-        if (confirm('¿Estás seguro de que quieres borrar todo el historial?')) {
-            localStorage.removeItem('searchHistory');
-            updateHistoryView();
-        }
-    });
-
-    // History Item Click Handler
-    historyList.addEventListener('click', (e) => {
-        const historyItem = e.target.closest('.history-item');
-        if (historyItem) {
-            const id = historyItem.dataset.id;
-            const history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
-            const item = history.find(h => h.id.toString() === id);
-            
-            if (item) {
-                // Switch to appropriate tab
-                const tabButton = document.querySelector(`.tab-button[data-tab="${item.type === 'comparison' ? 'comparator' : 'advisor'}"]`);
-                tabButton.click();
-                
-                // Show the result
-                const resultContainer = item.type === 'comparison' ? comparisonResult : advisorResult;
-                resultContainer.innerHTML = `
-                    <div class="${item.type === 'comparison' ? 'comparison' : 'recommendations'}-content animate__animated animate__fadeIn">
-                        ${item.data.result}
-                    </div>
-                `;
-                
-                resultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Botón de limpiar historial
+        elements.history.clearButton.addEventListener('click', () => {
+            if (confirm('¿Estás seguro de que quieres borrar todo el historial?')) {
+                state.history = [];
+                localStorage.removeItem('searchHistory');
+                renderHistory();
             }
-        }
-    });
+        });
 
-    // Initial Setup
-    updateCompareButton();
-    updateHistoryView();
+        // Botones de acciones en elementos del historial
+        document.querySelectorAll('.view-details-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const historyItem = e.target.closest('.history-item');
+                const itemId = parseInt(historyItem.dataset.id);
+                showHistoryItemDetails(itemId);
+            });
+        });
+
+        document.querySelectorAll('.delete-item-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const historyItem = e.target.closest('.history-item');
+                const itemId = parseInt(historyItem.dataset.id);
+                deleteHistoryItem(itemId);
+            });
+        });
+    }
+
+    // Funciones de utilidad
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = message;
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            notification.classList.add('show');
+        }, 100);
+
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
+    function showError(container, message) {
+        container.innerHTML = `
+            <div class="error">
+                <i class="fas fa-exclamation-circle"></i>
+                <h3>Error</h3>
+                <p>${message}</p>
+            </div>
+        `;
+    }
+
+    // Inicialización
+    renderHistory();
 });
