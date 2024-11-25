@@ -43,15 +43,13 @@ app.post('/api/compare', (req, res) => {
         return res.status(400).json({ error: 'URLs inválidas' });
     }
 
-    console.log('📊 Analizando productos con contexto:', userContext || 'Sin contexto');
-
     const pythonProcess = spawn(pythonCommand, [
-        path.join(__dirname, 'perplexity_analyzer.py'),
-        ...urls,
-        ...(userContext ? ['--context', userContext] : [])
-    ], {
-        env: { ...process.env, PYTHONUNBUFFERED: '1' }
-    });
+        path.join(__dirname, 'backend', 'scrapers', 'perplexity_analyzer.py'),
+        ...urls
+    ]);
+
+    // Resto del código actual del endpoint...
+    console.log('📊 Analizando productos con contexto:', userContext || 'Sin contexto');
 
     let data = '';
     let errorOutput = '';

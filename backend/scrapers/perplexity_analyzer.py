@@ -8,6 +8,7 @@ from urllib.parse import urlparse, unquote
 from dotenv import load_dotenv
 from pathlib import Path
 import argparse
+import time
 
 # Configuración para caracteres especiales
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
@@ -22,6 +23,7 @@ class ProductAnalyzer:
             api_key=os.getenv('PERPLEXITY_API_KEY'),
             base_url="https://api.perplexity.ai"
         )
+        self.cache = {}
 
     def extract_product_info_from_url(self, url):
         """Extrae información relevante de la URL del producto"""
@@ -49,6 +51,54 @@ class ProductAnalyzer:
         except Exception as e:
             print(f"Error extrayendo información: {str(e)}")
             return None
+
+    def get_recommendations(self, product_type, min_budget, max_budget, main_use, specific_needs):
+        try:
+            # Agregar caché básico
+            cache_key = f"{product_type}_{min_budget}_{max_budget}_{main_use}_{specific_needs}"
+            if cache_key in self.cache:
+                print("Utilizando resultado en caché.")
+                return self.cache[cache_key]
+            
+            # Iniciar el tiempo de procesamiento
+            start_time = time.time()
+
+            response = self.client.chat.completions.create(
+                model="llama-3.1-sonar-large-128k-online",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": """Eres un asesor experto que combina conocimiento profundo con capacidad de explicar de forma simple. Evita tecnicismos innecesarios y céntrate en el valor real para el usuario. Sé honesto sobre ventajas y desventajas."""
+                    },
+                    {
+                        "role": "user",
+                        "content": f"Recomienda un producto de tipo {product_type} con un presupuesto entre {min_budget} y {max_budget}. El producto se usará principalmente para {main_use}. Necesidades específicas: {specific_needs}."
+                    }
+                ],
+                temperature=0.3,
+                max_tokens=800,
+                stream=False
+            )
+
+            # Medir el tiempo de procesamiento
+            processing_time = time.time() - start_time
+            print(f"Tiempo de procesamiento: {processing_time:.2f} segundos")
+
+            result = {
+                "success": True,
+                "analysis": response.choices[0].message.content
+            }
+
+            # Almacenar en caché
+            self.cache[cache_key] = result
+            return result
+
+        except Exception as e:
+            print(f"Error en recomendación: {str(e)}")
+            return {
+                "success": False,
+                "error": "No se pudo generar la recomendación. Por favor, intenta de nuevo."
+            }
 
     def compare_products(self, products_info, user_context=None):
         try:
@@ -191,8 +241,12 @@ if __name__ == "__main__":
     
     if args.mode == 'recommend':
         try:
-            recommendations = analyzer.compare_products(
-                args.urls
+            recommendations = analyzer.get_recommendations(
+                args.type,
+                args.min_budget,
+                args.max_budget,
+                args.use,
+                args.needs
             )
             
             print("\nRESULT_JSON_START")
