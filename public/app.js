@@ -2,8 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Estado inicial de la aplicación
     const state = {
         products: [],
-        currentTab: 'comparator',
-        history: JSON.parse(localStorage.getItem('searchHistory')) || []
+        history: JSON.parse(localStorage.getItem('searchHistory')) || [],
+        currentTab: 'comparator'
     };
 
     // Referencias a elementos del DOM
@@ -29,44 +29,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Navegación por pestañas
-    elements.tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            const tabId = tab.getAttribute('data-tab');
-            switchTab(tabId);
-        });
-    });
-
-    function switchTab(tabId) {
-        // Actualizar estado
-        state.currentTab = tabId;
-
-        // Actualizar clases activas
-        elements.tabs.forEach(tab => {
-            tab.classList.toggle('active', tab.getAttribute('data-tab') === tabId);
-        });
-
-        elements.tabContents.forEach(content => {
-            content.classList.toggle('active', content.id === tabId);
-        });
-
-        // Cargar contenido específico de la pestaña si es necesario
-        if (tabId === 'history') {
-            renderHistory();
-        }
-    }
-
     // Mensajes de carga aleatorios
     const loadingMessages = [
-        "Analizando productos con IA... 🤖",
+        "Analizando productos... 🔍",
         "Comparando características... 📊",
-        "Evaluando precios... 💰",
-        "Buscando las mejores opciones... 🔍",
         "Consultando bases de datos... 📚",
         "Procesando información... ⚡",
-        "Preparando recomendaciones... 🎯"
+        "Evaluando opciones... 🤔",
+        "Preparando resultados... ✨",
+        "Generando recomendaciones... 🎯"
     ];
 
+    // Funciones de utilidad
     function getRandomLoadingMessage() {
         return loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
     }
@@ -79,20 +53,111 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
     }
-    // Manejo de productos
+
+    function showError(container, message) {
+        container.innerHTML = `
+            <div class="error">
+                <i class="fas fa-exclamation-circle"></i>
+                <h3>Error</h3>
+                <p>${message}</p>
+            </div>
+        `;
+    }
+
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.innerHTML = `
+            <i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+            <span>${message}</span>
+        `;
+        document.body.appendChild(notification);
+
+        setTimeout(() => notification.classList.add('show'), 100);
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+    // Manejo de pestañas
+    elements.tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabId = tab.getAttribute('data-tab');
+            switchTab(tabId);
+        });
+    });
+
+    function switchTab(tabId) {
+        state.currentTab = tabId;
+        
+        // Actualizar pestañas
+        elements.tabs.forEach(tab => {
+            tab.classList.toggle('active', tab.getAttribute('data-tab') === tabId);
+        });
+
+        // Actualizar contenido
+        elements.tabContents.forEach(content => {
+            content.classList.toggle('active', content.id === tabId);
+        });
+
+        // Cargar contenido específico si es necesario
+        if (tabId === 'history') {
+            renderHistory();
+        }
+    }
+
+    // Manejo del comparador
+    elements.productForm.input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            elements.productForm.addButton.click();
+        }
+    });
+
     elements.productForm.addButton.addEventListener('click', () => {
         const url = elements.productForm.input.value.trim();
         if (validateUrl(url)) {
             addProduct(url);
             elements.productForm.input.value = '';
         } else {
-            showNotification('Por favor, introduce una URL válida', 'error');
+            showNotification('Por favor, introduce una URL válida de una tienda compatible', 'error');
         }
     });
 
-    elements.productForm.input.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            elements.productForm.addButton.click();
+    elements.productForm.compareButton.addEventListener('click', async () => {
+        const context = elements.productForm.contextInput.value.trim();
+        showLoading(elements.productForm.resultArea);
+
+        try {
+            const response = await fetch('/api/compare', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    urls: state.products,
+                    context: context
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
+            renderComparison(data);
+            saveToHistory('comparison', {
+                products: state.products,
+                context: context
+            }, data);
+
+        } catch (error) {
+            showError(elements.productForm.resultArea, error.message);
+            console.error('Error en la comparación:', error);
         }
     });
 
@@ -111,7 +176,80 @@ document.addEventListener('DOMContentLoaded', () => {
             return false;
         }
     }
+    // Manejo de productos
+    function addProduct(url) {
+        if (state.products.includes(url)) {
+            showNotification('Este producto ya está en la lista', 'error');
+            return;
+        }
 
+        state.products.push(url);
+        renderProducts();
+        updateCompareButton();
+    }
+
+    function deleteProduct(index) {
+        state.products.splice(index, 1);
+        renderProducts();
+        updateCompareButton();
+    }
+
+    function renderProducts() {
+        elements.productForm.productsList.innerHTML = state.products.map((url, index) => `
+            <div class="product-card">
+                <div class="product-info">
+                    <p class="product-name">${getProductNameFromUrl(url)}</p>
+                    <small class="product-url">${new URL(url).hostname}</small>
+                </div>
+                <button class="delete-product" data-index="${index}">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `).join('');
+
+        // Añadir event listeners para eliminar productos
+        document.querySelectorAll('.delete-product').forEach(button => {
+            button.addEventListener('click', () => {
+                const index = parseInt(button.dataset.index);
+                deleteProduct(index);
+            });
+        });
+    }
+
+    function getProductNameFromUrl(url) {
+        try {
+            const pathname = new URL(url).pathname;
+            return pathname
+                .split('/')
+                .pop()
+                .replace(/-/g, ' ')
+                .replace(/\.html$/, '')
+                .split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+        } catch {
+            return 'Producto';
+        }
+    }
+
+    function updateCompareButton() {
+        const canCompare = state.products.length >= 2;
+        elements.productForm.compareButton.disabled = !canCompare;
+        elements.productForm.compareButton.classList.toggle('active', canCompare);
+    }
+
+    function renderComparison(data) {
+        if (!data.analysis) {
+            showError(elements.productForm.resultArea, 'No se pudo generar el análisis');
+            return;
+        }
+
+        elements.productForm.resultArea.innerHTML = `
+            <div class="comparison-content">
+                ${data.analysis}
+            </div>
+        `;
+    }
     function addProduct(url) {
         if (state.products.includes(url)) {
             showNotification('Este producto ya está en la lista', 'error');
@@ -136,7 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `).join('');
 
-        // Agregar event listeners para eliminar productos
+        // Agregar listeners para eliminar productos
         document.querySelectorAll('.delete-product').forEach(button => {
             button.addEventListener('click', () => {
                 const index = parseInt(button.dataset.index);
@@ -196,6 +334,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(formData)
             });
 
+            if (!response.ok) {
+                throw new Error(`Error del servidor: ${response.status}`);
+            }
+
             const data = await response.json();
 
             if (data.error) {
@@ -235,18 +377,39 @@ document.addEventListener('DOMContentLoaded', () => {
             filter === 'all' || item.type === filter
         );
 
-        elements.history.list.innerHTML = filteredHistory.length ? 
-            filteredHistory.map(item => createHistoryItemHTML(item)).join('') :
-            `<div class="empty-history">No hay elementos en el historial</div>`;
+        if (filteredHistory.length === 0) {
+            elements.history.list.innerHTML = `
+                <div class="empty-history">
+                    <i class="fas fa-history"></i>
+                    <p>No hay elementos en el historial</p>
+                </div>
+            `;
+            return;
+        }
+
+        elements.history.list.innerHTML = filteredHistory.map(item => 
+            createHistoryItemHTML(item)
+        ).join('');
 
         // Agregar event listeners para las acciones del historial
         addHistoryEventListeners();
     }
 
     function createHistoryItemHTML(item) {
-        const date = new Date(item.date).toLocaleString();
+        const date = new Date(item.date).toLocaleString('es-ES', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
         const typeIcon = item.type === 'comparison' ? 'exchange-alt' : 'magic';
         const typeText = item.type === 'comparison' ? 'Comparación' : 'Recomendación';
+
+        const summaryText = item.type === 'comparison'
+            ? `Comparación de ${item.request.urls?.length || 0} productos`
+            : `Búsqueda de ${item.request.productType} (${item.request.minBudget}€ - ${item.request.maxBudget}€)`;
 
         return `
             <div class="history-item" data-id="${item.id}">
@@ -259,7 +422,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </span>
                 </div>
                 <div class="history-content">
-                    ${getHistoryItemSummary(item)}
+                    <p>${summaryText}</p>
                 </div>
                 <div class="history-actions">
                     <button class="view-details-btn">
@@ -273,14 +436,6 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     }
 
-    function getHistoryItemSummary(item) {
-        if (item.type === 'comparison') {
-            return `Comparación de ${item.request.products.length} productos`;
-        } else {
-            return `Búsqueda de ${item.request.productType} - Presupuesto: ${item.request.minBudget}€ - ${item.request.maxBudget}€`;
-        }
-    }
-
     function addHistoryEventListeners() {
         // Filtros del historial
         elements.history.filters.forEach(filter => {
@@ -291,7 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Botón de limpiar historial
+        // Limpiar historial
         elements.history.clearButton.addEventListener('click', () => {
             if (confirm('¿Estás seguro de que quieres borrar todo el historial?')) {
                 state.history = [];
@@ -300,12 +455,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Botones de acciones en elementos del historial
+        // Ver detalles y eliminar items
         document.querySelectorAll('.view-details-btn').forEach(button => {
             button.addEventListener('click', (e) => {
                 const historyItem = e.target.closest('.history-item');
                 const itemId = parseInt(historyItem.dataset.id);
-                showHistoryItemDetails(itemId);
+                const item = state.history.find(h => h.id === itemId);
+                if (item) {
+                    showHistoryItemDetails(item);
+                }
             });
         });
 
@@ -318,31 +476,37 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Funciones de utilidad
-    function showNotification(message, type = 'info') {
-        const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        notification.innerHTML = message;
-        document.body.appendChild(notification);
-
-        setTimeout(() => {
-            notification.classList.add('show');
-        }, 100);
-
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => notification.remove(), 300);
-        }, 3000);
-    }
-
-    function showError(container, message) {
-        container.innerHTML = `
-            <div class="error">
-                <i class="fas fa-exclamation-circle"></i>
-                <h3>Error</h3>
-                <p>${message}</p>
+    function showHistoryItemDetails(item) {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>${item.type === 'comparison' ? 'Comparación' : 'Recomendación'}</h3>
+                    <button class="close-modal"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="modal-body">
+                    ${item.response.analysis || ''}
+                </div>
             </div>
         `;
+
+        document.body.appendChild(modal);
+        setTimeout(() => modal.classList.add('show'), 10);
+
+        modal.querySelector('.close-modal').addEventListener('click', () => {
+            modal.classList.remove('show');
+            setTimeout(() => modal.remove(), 300);
+        });
+    }
+
+    function deleteHistoryItem(itemId) {
+        const index = state.history.findIndex(item => item.id === itemId);
+        if (index !== -1) {
+            state.history.splice(index, 1);
+            localStorage.setItem('searchHistory', JSON.stringify(state.history));
+            renderHistory();
+        }
     }
 
     // Inicialización
