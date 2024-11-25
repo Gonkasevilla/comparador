@@ -3,10 +3,12 @@ const cors = require('cors');
 const { spawn } = require('child_process');
 const path = require('path');
 
+const pythonCommand = process.platform === 'win32' ? 'python' : 'python3';
+
 // Verificar Python al inicio
 const verifyPython = () => {
     return new Promise((resolve, reject) => {
-        const pythonCheck = spawn('python3', ['--version']);
+        const pythonCheck = spawn(pythonCommand, ['--version']);
         pythonCheck.on('close', (code) => {
             if (code === 0) {
                 console.log('✅ Python verificado correctamente');
@@ -43,7 +45,7 @@ app.post('/api/compare', (req, res) => {
 
     console.log('📊 Analizando productos con contexto:', userContext || 'Sin contexto');
 
-    const pythonProcess = spawn('python3', [
+    const pythonProcess = spawn(pythonCommand, [
         path.join(__dirname, 'perplexity_analyzer.py'),
         ...urls,
         ...(userContext ? ['--context', userContext] : [])
@@ -113,6 +115,59 @@ app.post('/api/compare', (req, res) => {
                 message: 'Por favor, inténtalo de nuevo',
                 details: error.message
             });
+        }
+    });
+});
+
+// En server.js, después de la ruta /api/compare
+app.post('/api/recommend', (req, res) => {
+    const { productType, minBudget, maxBudget, mainUse, specificNeeds } = req.body;
+    let hasResponded = false;
+
+    console.log('🔍 Generando recomendaciones para:', productType);
+
+    const pythonProcess = spawn(pythonCommand, [
+        path.join(__dirname, 'perplexity_analyzer.py'),
+        '--mode', 'recommend',
+        '--type', productType,
+        '--min-budget', minBudget,
+        '--max-budget', maxBudget,
+        '--use', mainUse,
+        '--needs', specificNeeds || ''
+    ]);
+
+    let data = '';
+    let errorOutput = '';
+
+    const timeout = setTimeout(() => {
+        if (!hasResponded) {
+            hasResponded = true;
+            pythonProcess.kill();
+            res.status(504).json({
+                error: 'La recomendación ha tardado demasiado tiempo'
+            });
+        }
+    }, 90000);
+
+    pythonProcess.stdout.on('data', chunk => data += chunk);
+    pythonProcess.stderr.on('data', error => errorOutput += error);
+
+    pythonProcess.on('close', (code) => {
+        clearTimeout(timeout);
+        if (hasResponded) return;
+
+        try {
+            const match = data.match(/RESULT_JSON_START\n([\s\S]*?)\nRESULT_JSON_END/);
+            if (!match) throw new Error('No se pudo obtener el resultado');
+            
+            const result = JSON.parse(match[1]);
+            hasResponded = true;
+            res.json(result);
+        } catch (error) {
+            if (!hasResponded) {
+                hasResponded = true;
+                res.status(500).json({ error: 'Error al procesar la recomendación' });
+            }
         }
     });
 });

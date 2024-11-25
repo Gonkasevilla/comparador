@@ -51,119 +51,51 @@ class ProductAnalyzer:
             return None
 
     def compare_products(self, products_info, user_context=None):
-        """Compara productos usando IA"""
         try:
             context_part = f"\nTeniendo en cuenta que el usuario busca: {user_context}" if user_context else ""
             
+            products = products_info.split("\n\n")
+            product1 = products[0] if len(products) > 0 else "Primer producto"
+            product2 = products[1] if len(products) > 1 else "Segundo producto"
+            
             prompt = f"""
-            Actúa como un experto asesor de tecnología y analiza estos productos:{context_part}
+Eres un asesor experto que sabe explicar de forma clara y accesible, usando un lenguaje que cualquier persona pueda entender. Tu objetivo es ayudar a tomar la mejor decisión basada en necesidades reales, siendo honesto sobre ventajas y desventajas.
 
-            {products_info}
+Analiza estos productos:{context_part}
 
-            Proporciona un análisis detallado con este formato:
+{products_info}
 
-            💡 RECOMENDACIÓN RÁPIDA
-            • **La mejor opción es** [producto] porque [razón principal]
-            • **También podrías considerar** [otro producto] si [condición específica]
+Proporciona un análisis con el siguiente formato usando Markdown:
 
-            👤 PERFILES DE USO
-            **Primer producto es ideal para:**
-            • Usuarios que [beneficio principal]
-            • Personas que [ventaja específica]
-            • Casos donde [característica importante]
+### 🌟 NUESTRA RECOMENDACIÓN
 
-            **Segundo producto es ideal para:**
-            • Usuarios que [beneficio principal]
-            • Personas que [ventaja específica]
-            • Casos donde [característica importante]
+1. **Recomendación principal:**
+  - Para tu caso concreto, te recomendamos [producto] porque [razones clave]
 
-            📊 COMPARATIVA DETALLADA
-            • **Rendimiento:** [comparación clara]
-            • **Calidad/Precio:** [análisis de valor]
-            • **Características:** [diferencias clave]
-            • **Ventajas/Desventajas:** [puntos importantes]
+2. **Alternativa a considerar:**
+  - Como segunda opción, [otro producto] porque [razones]
 
-            💰 ANÁLISIS DE PRECIO
-            • **Primer producto:** [valor por dinero]
-            • **Segundo producto:** [valor por dinero]
-            • **Comparativa:** [análisis de la inversión]
+### 📊 COMPARATIVA RÁPIDA
 
-            🎯 CONSEJO FINAL
-            [Recomendación personalizada considerando el contexto y necesidades del usuario]
-            """
+**{product1}:**
+- Puntos fuertes: [listado]
+- Ideal para: [casos de uso]
+- Precio/calidad: [valoración]
+
+**{product2}:**
+- Puntos fuertes: [listado]
+- Ideal para: [casos de uso]
+- Precio/calidad: [valoración]
+
+### ✨ DIFERENCIAS CLAVE
+- [3-4 diferencias importantes]"""
 
             response = self.client.chat.completions.create(
                 model="llama-3.1-sonar-large-128k-online",
                 messages=[
                     {
                         "role": "system",
-                        "content": """Eres un experto asesor de tecnología que habla de forma natural 
-                        y cercana. Tu objetivo es ayudar a los usuarios a tomar la mejor decisión de 
-                        compra basada en sus necesidades específicas."""
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                temperature=0.3,
-                max_tokens=2000
-            )
-
-            return response.choices[0].message.content
-
-        except Exception as e:
-            print(f"Error en comparación: {str(e)}")
-            return None
-def get_recommendations(self, product_type, min_budget, max_budget, main_use, specific_needs):
-        """Genera recomendaciones personalizadas"""
-        try:
-            prompt = f"""
-            Actúa como un experto asesor de tecnología en España. 
-            Necesito recomendaciones reales y actualizadas para:
-
-            📝 REQUISITOS:
-            • Producto: {product_type}
-            • Presupuesto: {min_budget}€ - {max_budget}€
-            • Uso principal: {main_use}
-            • Necesidades: {specific_needs}
-
-            Proporciona un análisis con este formato:
-
-            🏆 TOP 3 RECOMENDACIONES:
-            Para cada producto incluir:
-            • Nombre exacto del modelo
-            • Precio actual aproximado
-            • Dónde comprarlo (PCComponentes, MediaMarkt, Amazon España)
-            • Por qué es ideal para este uso
-            • Características relevantes
-
-            💡 ANÁLISIS POR PERFIL:
-            • Mejor calidad/precio: [Producto] porque [razones]
-            • Opción premium: [Producto] porque [razones]
-            • Opción equilibrada: [Producto] porque [razones]
-
-            ⚡ COMPARATIVA:
-            • Rendimiento: [aspectos clave]
-            • Calidad: [construcción y materiales]
-            • Durabilidad: [vida útil esperada]
-            • Valor: [justificación del precio]
-
-            🎯 RECOMENDACIÓN FINAL:
-            • Producto más recomendado
-            • Justificación clara
-            • Consideraciones importantes
-            • Alternativas si el presupuesto es flexible
-            """
-
-            response = self.client.chat.completions.create(
-                model="llama-3.1-sonar-large-128k-online",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": """Eres un experto en tecnología en España. 
-                        Proporciona recomendaciones prácticas basadas en productos realmente 
-                        disponibles. Usa un lenguaje natural y cercano."""
+                        "content": """Eres un asesor experto que combina conocimiento profundo con capacidad de explicar de forma simple. Evita tecnicismos innecesarios y céntrate en el valor real para el usuario. Sé honesto sobre ventajas y desventajas."""
                     },
                     {
                         "role": "user",
@@ -186,7 +118,7 @@ def get_recommendations(self, product_type, min_budget, max_budget, main_use, sp
                 "error": "No se pudo generar la recomendación. Por favor, intenta de nuevo."
             }
 
-def analyze_products(self, urls):
+    def analyze_products(self, urls):
         """Función principal para analizar productos"""
         try:
             products_info = []
@@ -259,12 +191,8 @@ if __name__ == "__main__":
     
     if args.mode == 'recommend':
         try:
-            recommendations = analyzer.get_recommendations(
-                args.type,
-                args.min_budget,
-                args.max_budget,
-                args.use,
-                args.needs
+            recommendations = analyzer.compare_products(
+                args.urls
             )
             
             print("\nRESULT_JSON_START")
@@ -280,4 +208,4 @@ if __name__ == "__main__":
             print(json.dumps(error_result, ensure_ascii=False))
             print("RESULT_JSON_END")
     else:
-        analyzer.analyze_products(args.urls)       
+        analyzer.analyze_products(args.urls)

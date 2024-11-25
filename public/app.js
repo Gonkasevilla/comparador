@@ -351,6 +351,20 @@ document.addEventListener('DOMContentLoaded', () => {
             showError(elements.advisorForm.resultArea, error.message);
         }
     });
+
+    function renderRecommendation(data) {
+        if (!data.analysis) {
+            showError(elements.advisorForm.resultArea, 'No se pudo generar la recomendación');
+            return;
+        }
+
+        elements.advisorForm.resultArea.innerHTML = `
+            <div class="advisor-result">
+                ${data.analysis}
+            </div>
+        `;
+    }
+
     // Manejo del historial
     function saveToHistory(type, request, response) {
         const historyItem = {
