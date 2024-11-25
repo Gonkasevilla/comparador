@@ -115,7 +115,7 @@ class ProductAnalyzer:
         except Exception as e:
             print(f"Error en comparación: {str(e)}")
             return None
- def get_recommendations(self, product_type, min_budget, max_budget, main_use, specific_needs):
+def get_recommendations(self, product_type, min_budget, max_budget, main_use, specific_needs):
         """Genera recomendaciones personalizadas"""
         try:
             prompt = f"""
@@ -186,7 +186,7 @@ class ProductAnalyzer:
                 "error": "No se pudo generar la recomendación. Por favor, intenta de nuevo."
             }
 
-    def analyze_products(self, urls):
+def analyze_products(self, urls):
         """Función principal para analizar productos"""
         try:
             products_info = []
