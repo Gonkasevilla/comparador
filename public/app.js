@@ -2,7 +2,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Estado inicial de la aplicación
     const state = {
         products: [],
-        history: JSON.parse(localStorage.getItem('searchHistory')) || [],
+        history: (() => {
+            try {
+                return JSON.parse(localStorage.getItem('searchHistory')) || [];
+            } catch (error) {
+                console.error('Error cargando historial:', error);
+                return [];
+            }
+        })(),
         currentTab: 'comparator'
     };
 
@@ -29,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Mensajes de carga aleatorios
+    // Mensajes de carga
     const loadingMessages = [
         "Analizando productos... 🔍",
         "Comparando características... 📊",
@@ -46,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showLoading(container) {
+        if (!container) return;
         container.innerHTML = `
             <div class="loading">
                 <div class="spinner"></div>
@@ -55,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showError(container, message) {
+        if (!container) return;
         container.innerHTML = `
             <div class="error">
                 <i class="fas fa-exclamation-circle"></i>
@@ -72,7 +81,6 @@ document.addEventListener('DOMContentLoaded', () => {
             <span>${message}</span>
         `;
         document.body.appendChild(notification);
-
         setTimeout(() => notification.classList.add('show'), 100);
         setTimeout(() => {
             notification.classList.remove('show');
@@ -84,11 +92,12 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.tabs.forEach(tab => {
         tab.addEventListener('click', () => {
             const tabId = tab.getAttribute('data-tab');
-            switchTab(tabId);
+            if (tabId) switchTab(tabId);
         });
     });
 
     function switchTab(tabId) {
+        if (!tabId) return;
         state.currentTab = tabId;
         
         elements.tabs.forEach(tab => {
@@ -105,15 +114,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Manejo del comparador
-    elements.productForm.input.addEventListener('keypress', (e) => {
+    elements.productForm.input?.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
-            elements.productForm.addButton.click();
+            elements.productForm.addButton?.click();
         }
     });
 
-    elements.productForm.addButton.addEventListener('click', () => {
-        const url = elements.productForm.input.value.trim();
-        if (validateUrl(url)) {
+    elements.productForm.addButton?.addEventListener('click', () => {
+        const url = elements.productForm.input?.value.trim();
+        if (url && validateUrl(url)) {
             addProduct(url);
             elements.productForm.input.value = '';
         } else {
@@ -121,8 +130,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    elements.productForm.compareButton.addEventListener('click', async () => {
-        const context = elements.productForm.contextInput.value.trim();
+    elements.productForm.compareButton?.addEventListener('click', async () => {
+        const context = elements.productForm.contextInput?.value.trim() || '';
         showLoading(elements.productForm.resultArea);
 
         try {
@@ -148,11 +157,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             renderComparison(data);
-            saveToHistory('comparison', {
-                products: state.products,
-                context: context
-            }, data);
-
+            if (data.success) {
+                saveToHistory('comparison', {
+                    products: [...state.products],
+                    context: context
+                }, data);
+            }
         } catch (error) {
             showError(elements.productForm.resultArea, error.message);
             console.error('Error en la comparación:', error);
@@ -170,15 +180,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 'elcorteingles.es',
                 'fnac.es'
             ];
-            return validDomains.some(domain => url.includes(domain));
+            return validDomains.some(domain => url.toLowerCase().includes(domain));
         } catch {
             return false;
         }
     }
 
-    // Manejo de productos
     function addProduct(url) {
-        if (state.products.includes(url)) {
+        if (!url || state.products.includes(url)) {
             showNotification('Este producto ya está en la lista', 'error');
             return;
         }
@@ -189,12 +198,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function deleteProduct(index) {
-        state.products.splice(index, 1);
-        renderProducts();
-        updateCompareButton();
+        if (index >= 0 && index < state.products.length) {
+            state.products.splice(index, 1);
+            renderProducts();
+            updateCompareButton();
+        }
     }
 
     function renderProducts() {
+        if (!elements.productForm.productsList) return;
+
         elements.productForm.productsList.innerHTML = state.products.map((url, index) => `
             <div class="product-card">
                 <div class="product-info">
@@ -210,7 +223,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.delete-product').forEach(button => {
             button.addEventListener('click', () => {
                 const index = parseInt(button.dataset.index);
-                deleteProduct(index);
+                if (!isNaN(index)) {
+                    deleteProduct(index);
+                }
             });
         });
     }
@@ -220,25 +235,28 @@ document.addEventListener('DOMContentLoaded', () => {
             const pathname = new URL(url).pathname;
             return pathname
                 .split('/')
+                .filter(part => part)
                 .pop()
                 .replace(/-/g, ' ')
                 .replace(/\.html$/, '')
                 .split(' ')
                 .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(' ');
+                .join(' ') || 'Producto';
         } catch {
             return 'Producto';
         }
     }
 
     function updateCompareButton() {
+        if (!elements.productForm.compareButton) return;
         const canCompare = state.products.length >= 2;
         elements.productForm.compareButton.disabled = !canCompare;
         elements.productForm.compareButton.classList.toggle('active', canCompare);
     }
 
     function renderComparison(data) {
-        if (!data.analysis) {
+        if (!elements.productForm.resultArea) return;
+        if (!data?.analysis) {
             showError(elements.productForm.resultArea, 'No se pudo generar el análisis');
             return;
         }
@@ -251,16 +269,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Manejo del recomendador
-    elements.advisorForm.form.addEventListener('submit', async (e) => {
+    elements.advisorForm.form?.addEventListener('submit', async (e) => {
         e.preventDefault();
         
         const formData = {
-            productType: document.getElementById('product-type').value,
-            minBudget: document.getElementById('min-budget').value,
-            maxBudget: document.getElementById('max-budget').value,
-            mainUse: document.getElementById('main-use').value,
-            specificNeeds: document.getElementById('specific-needs').value
+            productType: document.getElementById('product-type')?.value || '',
+            minBudget: document.getElementById('min-budget')?.value || '',
+            maxBudget: document.getElementById('max-budget')?.value || '',
+            mainUse: document.getElementById('main-use')?.value || '',
+            specificNeeds: document.getElementById('specific-needs')?.value || ''
         };
+
+        if (!formData.productType || !formData.minBudget || !formData.maxBudget) {
+            showNotification('Por favor, completa los campos requeridos', 'error');
+            return;
+        }
 
         showLoading(elements.advisorForm.resultArea);
 
@@ -284,15 +307,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             renderRecommendation(data);
-            saveToHistory('recommendation', formData, data);
-
+            if (data.success) {
+                saveToHistory('recommendation', formData, data);
+            }
         } catch (error) {
             showError(elements.advisorForm.resultArea, error.message);
         }
     });
 
     function renderRecommendation(data) {
-        if (!data.analysis) {
+        if (!elements.advisorForm.resultArea) return;
+        if (!data?.analysis) {
             showError(elements.advisorForm.resultArea, 'No se pudo generar la recomendación');
             return;
         }
@@ -308,26 +333,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Manejo del historial
     function saveToHistory(type, request, response) {
-        const historyItem = {
-            id: Date.now(),
-            type: type,
-            date: new Date().toISOString(),
-            request: request,
-            response: response
-        };
+        try {
+            if (!type || !request || !response) {
+                console.error('Datos inválidos para el historial');
+                return;
+            }
 
-        state.history.unshift(historyItem);
-        if (state.history.length > 10) {
-            state.history.pop();
-        }
+            const historyItem = {
+                id: Date.now(),
+                type: type,
+                date: new Date().toISOString(),
+                request: type === 'comparison' 
+                    ? { products: [...(request.products || [])], context: request.context }
+                    : { ...request },
+                response: {
+                    analysis: response.analysis || ''
+                }
+            };
 
-        localStorage.setItem('searchHistory', JSON.stringify(state.history));
-        if (state.currentTab === 'history') {
-            renderHistory();
+            state.history.unshift(historyItem);
+            if (state.history.length > 10) {
+                state.history.pop();
+            }
+
+            localStorage.setItem('searchHistory', JSON.stringify(state.history));
+            if (state.currentTab === 'history') {
+                renderHistory();
+            }
+        } catch (error) {
+            console.error('Error al guardar en historial:', error);
         }
     }
 
     function renderHistory(filter = 'all') {
+        if (!elements.history.list) return;
+
         const filteredHistory = state.history.filter(item => 
             filter === 'all' || item.type === filter
         );
@@ -342,14 +382,16 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        elements.history.list.innerHTML = filteredHistory.map(item => 
-            createHistoryItemHTML(item)
-        ).join('');
+        elements.history.list.innerHTML = filteredHistory
+            .map(item => createHistoryItemHTML(item))
+            .join('');
 
         addHistoryEventListeners();
     }
 
     function createHistoryItemHTML(item) {
+        if (!item) return '';
+
         const date = new Date(item.date).toLocaleString('es-ES', {
             year: 'numeric',
             month: 'long',
@@ -361,9 +403,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const typeIcon = item.type === 'comparison' ? 'exchange-alt' : 'magic';
         const typeText = item.type === 'comparison' ? 'Comparación' : 'Recomendación';
 
-        const summaryText = item.type === 'comparison'
-            ? `Comparación de ${item.request.products?.length || 0} productos`
-            : `Búsqueda de ${item.request.productType} (${item.request.minBudget}€ - ${item.request.maxBudget}€)`;
+        let summaryText = 'Análisis no disponible';
+        
+        if (item.type === 'comparison' && item.request?.products) {
+            summaryText = `Comparación de ${item.request.products.length} productos`;
+        } else if (item.type === 'recommendation' && item.request) {
+            summaryText = `Búsqueda de ${item.request.productType || 'producto'} (${item.request.minBudget || 0}€ - ${item.request.maxBudget || 0}€)`;
+        }
 
         return `
             <div class="history-item" data-id="${item.id}">
@@ -391,7 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function addHistoryEventListeners() {
-        elements.history.filters.forEach(filter => {
+        elements.history.filters?.forEach(filter => {
             filter.addEventListener('click', () => {
                 elements.history.filters.forEach(f => f.classList.remove('active'));
                 filter.classList.add('active');
@@ -399,7 +445,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        elements.history.clearButton.addEventListener('click', () => {
+        elements.history.clearButton?.addEventListener('click', () => {
             if (confirm('¿Estás seguro de que quieres borrar todo el historial?')) {
                 state.history = [];
                 localStorage.removeItem('searchHistory');
@@ -410,24 +456,33 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.view-details-btn').forEach(button => {
             button.addEventListener('click', (e) => {
                 const historyItem = e.target.closest('.history-item');
+                if (!historyItem) return;
+                
                 const itemId = parseInt(historyItem.dataset.id);
+                if (isNaN(itemId)) return;
+
                 const item = state.history.find(h => h.id === itemId);
                 if (item) {
                     showHistoryItemDetails(item);
                 }
             });
         });
-
         document.querySelectorAll('.delete-item-btn').forEach(button => {
             button.addEventListener('click', (e) => {
                 const historyItem = e.target.closest('.history-item');
+                if (!historyItem) return;
+                
                 const itemId = parseInt(historyItem.dataset.id);
+                if (isNaN(itemId)) return;
+                
                 deleteHistoryItem(itemId);
             });
         });
     }
 
     function showHistoryItemDetails(item) {
+        if (!item) return;
+
         const modal = document.createElement('div');
         modal.className = 'modal';
         modal.innerHTML = `
@@ -437,7 +492,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button class="close-modal"><i class="fas fa-times"></i></button>
                 </div>
                 <div class="modal-body">
-                    ${item.response.analysis || ''}
+                    ${item.response?.analysis || 'No hay detalles disponibles'}
                 </div>
             </div>
         `;
@@ -445,7 +500,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(modal);
         setTimeout(() => modal.classList.add('show'), 10);
 
-        modal.querySelector('.close-modal').addEventListener('click', () => {
+        modal.querySelector('.close-modal')?.addEventListener('click', () => {
             modal.classList.remove('show');
             setTimeout(() => modal.remove(), 300);
         });
