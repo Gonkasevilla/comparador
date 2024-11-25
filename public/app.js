@@ -79,6 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => notification.remove(), 300);
         }, 3000);
     }
+
     // Manejo de pestañas
     elements.tabs.forEach(tab => {
         tab.addEventListener('click', () => {
@@ -90,17 +91,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function switchTab(tabId) {
         state.currentTab = tabId;
         
-        // Actualizar pestañas
         elements.tabs.forEach(tab => {
             tab.classList.toggle('active', tab.getAttribute('data-tab') === tabId);
         });
 
-        // Actualizar contenido
         elements.tabContents.forEach(content => {
             content.classList.toggle('active', content.id === tabId);
         });
 
-        // Cargar contenido específico si es necesario
         if (tabId === 'history') {
             renderHistory();
         }
@@ -164,18 +162,20 @@ document.addEventListener('DOMContentLoaded', () => {
     function validateUrl(url) {
         try {
             new URL(url);
-            return url.includes('http') && (
-                url.includes('pccomponentes.com') ||
-                url.includes('mediamarkt.es') ||
-                url.includes('amazon.es') ||
-                url.includes('carrefour.es') ||
-                url.includes('elcorteingles.es') ||
-                url.includes('fnac.es')
-            );
+            const validDomains = [
+                'pccomponentes.com',
+                'mediamarkt.es',
+                'amazon.es',
+                'carrefour.es',
+                'elcorteingles.es',
+                'fnac.es'
+            ];
+            return validDomains.some(domain => url.includes(domain));
         } catch {
             return false;
         }
     }
+
     // Manejo de productos
     function addProduct(url) {
         if (state.products.includes(url)) {
@@ -207,7 +207,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `).join('');
 
-        // Añadir event listeners para eliminar productos
         document.querySelectorAll('.delete-product').forEach(button => {
             button.addEventListener('click', () => {
                 const index = parseInt(button.dataset.index);
@@ -249,66 +248,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${data.analysis}
             </div>
         `;
-    }
-    function addProduct(url) {
-        if (state.products.includes(url)) {
-            showNotification('Este producto ya está en la lista', 'error');
-            return;
-        }
-
-        state.products.push(url);
-        renderProducts();
-        updateCompareButton();
-    }
-
-    function renderProducts() {
-        elements.productForm.productsList.innerHTML = state.products.map((url, index) => `
-            <div class="product-card">
-                <div class="product-info">
-                    <p class="product-name">${getProductNameFromUrl(url)}</p>
-                    <small class="product-url">${new URL(url).hostname}</small>
-                </div>
-                <button class="delete-product" data-index="${index}">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        `).join('');
-
-        // Agregar listeners para eliminar productos
-        document.querySelectorAll('.delete-product').forEach(button => {
-            button.addEventListener('click', () => {
-                const index = parseInt(button.dataset.index);
-                deleteProduct(index);
-            });
-        });
-    }
-
-    function getProductNameFromUrl(url) {
-        try {
-            const pathname = new URL(url).pathname;
-            return pathname
-                .split('/')
-                .pop()
-                .replace(/-/g, ' ')
-                .replace('.html', '')
-                .split(' ')
-                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(' ');
-        } catch {
-            return 'Producto';
-        }
-    }
-
-    function deleteProduct(index) {
-        state.products.splice(index, 1);
-        renderProducts();
-        updateCompareButton();
-    }
-
-    function updateCompareButton() {
-        const canCompare = state.products.length >= 2;
-        elements.productForm.compareButton.disabled = !canCompare;
-        elements.productForm.compareButton.classList.toggle('active', canCompare);
     }
 
     // Manejo del recomendador
@@ -360,7 +299,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         elements.advisorForm.resultArea.innerHTML = `
             <div class="advisor-result">
-                ${data.analysis}
+                <div class="recommendation-content">
+                    ${data.analysis}
+                </div>
             </div>
         `;
     }
@@ -405,7 +346,6 @@ document.addEventListener('DOMContentLoaded', () => {
             createHistoryItemHTML(item)
         ).join('');
 
-        // Agregar event listeners para las acciones del historial
         addHistoryEventListeners();
     }
 
@@ -422,7 +362,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const typeText = item.type === 'comparison' ? 'Comparación' : 'Recomendación';
 
         const summaryText = item.type === 'comparison'
-            ? `Comparación de ${item.request.urls?.length || 0} productos`
+            ? `Comparación de ${item.request.products?.length || 0} productos`
             : `Búsqueda de ${item.request.productType} (${item.request.minBudget}€ - ${item.request.maxBudget}€)`;
 
         return `
@@ -451,7 +391,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function addHistoryEventListeners() {
-        // Filtros del historial
         elements.history.filters.forEach(filter => {
             filter.addEventListener('click', () => {
                 elements.history.filters.forEach(f => f.classList.remove('active'));
@@ -460,7 +399,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Limpiar historial
         elements.history.clearButton.addEventListener('click', () => {
             if (confirm('¿Estás seguro de que quieres borrar todo el historial?')) {
                 state.history = [];
@@ -469,7 +407,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Ver detalles y eliminar items
         document.querySelectorAll('.view-details-btn').forEach(button => {
             button.addEventListener('click', (e) => {
                 const historyItem = e.target.closest('.history-item');
